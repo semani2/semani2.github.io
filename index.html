@@ -1,0 +1,986 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Working with MVVM, LiveData and Databinding</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="android_working_with_mvvm_livedata_databinding"
+                  title="Working with MVVM, LiveData and Databinding"
+                  environment="web"
+                  feedback-link="https://github.com/SaiEmaniFlipp">
+    
+      <google-codelab-step label="Welcome" duration="5">
+        <p>This practical codelab is part of the Flipp Android Engineer Onboarding course. Other codelabs that are part of the course are as follows:</p>
+<ul>
+<li>Working with Coroutines, Retrofit and Moshi</li>
+<li>Working with Room</li>
+</ul>
+<h2 is-upgraded>Introduction</h2>
+<p>The Android operating system provides a strong foundation for building apps that rull well on a wide range of devices and form factors. However, issues like complex lifecycles and a lack of a recommended app architecture make it challenging to write robust apps. The Android Architecture Components provide libraries for common tasks such as lifecycle management and data persistence to make it easier to implement the recommended architecture.</p>
+<h2 is-upgraded>What are the Architecture components?</h2>
+<p>Before we get into the nitty-gritty of how we work with the various components at Flipp, let us walk through a short overview of the <a href="https://developer.android.com/topic/libraries/architecture/index.html" target="_blank">Architecture Components</a> and how they work together.</p>
+<p>The diagram below shows a basic form of the recommended architecture for apps that use Architecture Components. The architecture consists of a UI controller, a ViewModel that serves LiveData, a Repository, and a Room database. The Room database is backed by an SQLite database and accessible through a data access object (DAO).</p>
+<p class="image-container"><img alt="Android Architecture Diagram" src="img/5979e4ef67c79dcf.png"></p>
+<h2 is-upgraded>Architecture Components @ Flipp</h2>
+<p>We here at Flipp, have embraced this recommendation from Google on how to build a robust, testable and maintainable application using Architecture components.</p>
+<p>All our <code>activities</code> and <code>fragments</code> represent the view layer. We have <code>viewmodels</code> that provide the necessary data to the UI and act as communication centers between the <code>repository</code> and the UI. We use the repository as a class that helps us manage multiple data sources, which in our case are the Room database and a remote data source like our Flipp backend (Maestro, BackFlipp, Accounts, etc).</p>
+<p>We make use of Room, which is a database layer on top of SQLite that takes care of mundane taks that were previously part of a verbose helper class.</p>
+<h2 is-upgraded>What you should already know</h2>
+<p>All the Android codelabs will be working with Kotlin, so familiarity with the language is recommended.</p>
+<p>It helps to be familiar with:</p>
+<ul>
+<li>Software architectural patterns that separate data from the UI.</li>
+<li>The <a href="https://en.wikipedia.org/wiki/Observer_pattern" target="_blank">observer pattern</a>. In summary, the observer pattern defines a one-to-many dependency between objects. Whenever an object changes its state, all the object&#39;s dependents are notified and updated automatically. The main object is called the &#34;subject&#34; and its dependents are called the &#34;observers.&#34; Usually, the subject notifies the observers by calling one of the observers&#39; methods. The subject knows what methods to call, because the observers are &#34;registered&#34; with the subject and specify the methods to call.</li>
+</ul>
+<h2 class="checklist" is-upgraded>What you&#39;ll learn</h2>
+<p>How to work with the MVVM pattern, architecture components, databinding in the context of the Flipp application. You&#39;ll use <a href="https://developer.android.com/topic/libraries/architecture/viewmodel.html" target="_blank">ViewModel</a>, <a href="https://developer.android.com/reference/android/arch/lifecycle/LiveData.html" target="_blank">LiveData</a>, <a href="https://developer.android.com/topic/libraries/data-binding" target="_blank">Databinding</a>.</p>
+<h2 is-upgraded>What you&#39;ll do</h2>
+<ul>
+<li>Add a new feature to the Flipp app. The new feature is as follows: When an user is on a storefront (flyer page), they can know get more information about the store, by clicking on the new <code>info</code> button on the toolbar.</li>
+<li>The info button will launch the new <code>Activity</code> that we will build as part of this code lab.</li>
+<li>Use a <code>ViewModel</code> to separate all data operations from the UI.</li>
+<li>Use <code>DataBinding</code> to bind UI components in XML to data sources using a declarative format rather than programmatically, reducing boilerplate code.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Feature overview" duration="2">
+        <p>In this practical you build a feature that uses the Android Architecture Components. The <code>Store Info</code> feature displays information like address, store hours, contact information, ratings, etc. This feature is basic, but sufficiently complete that we can use it as a template to build on.</p>
+<p>The StoreInfo feature does the following:</p>
+<ul>
+<li>The <code>StoreInfoActivity</code> works with <code>StoreInfoActivityViewModel</code> to fetch and display store information to the user.</li>
+<li>The <code>StoreInfoActivityViewModel</code> fetches the required information from a web service using the <code>Retrofit</code> network library in an upcoming code lab.</li>
+<li>The fetched data will also be persisted for offline availability using a <code>Room</code> database in an upcoming lab.</li>
+</ul>
+<p>The screenshot below shows the <code>Store Info</code> feature.<br><img style="width: 250.00px" src="img/3ad55c081b27cd9f.png"></p>
+<h2 is-upgraded>StoreInfo feature architecture overview</h2>
+<p>This feature will be built using the architecture that was discussed in the first section of this codelab.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Starter Code" duration="5">
+        <p>To help you get started with developing the <code>Store Info</code> feature, we are providing you with started code where a lot of the boiler plate work has been done. Checkout this <a href="https://github.com/wishabi/flipp-droid/tree/codelab/android-mvvm/starter-code" target="_blank">branch</a> to get started with the codelab. Let us take some time to review the given starter code.</p>
+<h2 is-upgraded>StoreInfoActivity</h2>
+<p>A basic activity to display store information has been added to which you will be adding the required code in this codelab. Here is a snippet of what that activity looks like:</p>
+<pre><code>class StoreInfoActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_store_info)
+    }
+}
+</code></pre>
+<h2 is-upgraded>Changes to AndroidManifest</h2>
+<p><code>StoreInfoActivity</code> has been added to the <code>AndroidManifest</code>&#39;s <code>application</code> tag to register it with our Flipp Application.</p>
+<pre><code>&lt;activity android:name=&#34;.app.storeinfo.StoreInfoActivity&#34;
+      android:screenOrientation=&#34;sensorPortrait&#34; /&gt;
+</code></pre>
+<h2 is-upgraded>activity_store_info.xml</h2>
+<p>The required xml layout to render all the required information has been created for you. <code>ConstraintLayout</code> have been used to create this complex view.</p>
+<h2 is-upgraded>strings.xml</h2>
+<p>All the required string resources have been added to the <code>strings.xml</code> file for your convenience.</p>
+<pre><code>&lt;!-- CodeLab Strings --&gt;
+  &lt;string name=&#34;code_lab_store_hours&#34;&gt;Store Hours&lt;/string&gt;
+  &lt;string name=&#34;code_lab_store_hours_sunday&#34;&gt;Sunday&lt;/string&gt;
+  &lt;string name=&#34;code_lab_store_hours_monday&#34;&gt;Monday&lt;/string&gt;
+  &lt;string name=&#34;code_lab_store_hours_tuesday&#34;&gt;Tuesday&lt;/string&gt;
+  &lt;string name=&#34;code_lab_store_hours_wednesday&#34;&gt;Wednesday&lt;/string&gt;
+  &lt;string name=&#34;code_lab_store_hours_thursday&#34;&gt;Thursday&lt;/string&gt;
+  &lt;string name=&#34;code_lab_store_hours_friday&#34;&gt;Friday&lt;/string&gt;
+  &lt;string name=&#34;code_lab_store_hours_saturday&#34;&gt;Saturday&lt;/string&gt;
+  &lt;string name=&#34;code_lab_contact_info&#34;&gt;Contact info&lt;/string&gt;
+  &lt;string name=&#34;code_lab_website&#34;&gt;Website&lt;/string&gt;
+  &lt;string name=&#34;code_lab_reviews&#34;&gt;Reviews&lt;/string&gt;
+  &lt;string name=&#34;code_lab_review_text&#34;&gt;%1$f (%2$d Reviews)&lt;/string&gt;
+  &lt;string name=&#34;code_lab_store_info&#34;&gt;View Store Info&lt;/string&gt;
+</code></pre>
+<h2 is-upgraded>storefront_menu.xml</h2>
+<p>The entry point to this feature is from a menu option called <code>View Store Info</code> in the <code>StorefrontCarouselActivity</code>. This menu option has been added to the <code>storefront_menu</code> file.</p>
+<pre><code> &lt;item
+    android:id=&#34;@+id/code_lab_store_info&#34;
+    android:title=&#34;@string/code_lab_store_info&#34;
+    app:showAsAction=&#34;never&#34; /&gt;
+</code></pre>
+<h2 is-upgraded>StorefrontCarouselActivity</h2>
+<p>The code to start the <code>StoreInfoActivity</code> on click of the above defined menu option has been added for you in the <code>StorefrontCarouselActivity</code>. The <code>onOptionsItemSelected()</code> has been modified to account for the newly added menu option. Here is the code snippet that was added:</p>
+<pre><code>case R.id.code_lab_store_info:
+        startActivity(new Intent(this, StoreInfoActivity.class));
+        return true;
+</code></pre>
+<h2 is-upgraded>StoreInfo</h2>
+<p>A <code>data</code> class to store the necessary information that will be displayed has been created with the required data fields. We will build on this class to make it compatible with Retrofit and Room in the upcoming code labs.</p>
+<pre><code>data class StoreInfo(val storeName: String,
+                     val storeAddress: String,
+                     val storeHours: List&lt;String&gt;,
+                     val storeContactNumber: String,
+                     val storeWebsite: String,
+                     val storeRating: Float,
+                     val storeNumReviews: Int)
+</code></pre>
+<h2 is-upgraded>What&#39;s next</h2>
+<p>We will start to build this feature from our next step. First up, creating the <code>Repository</code>.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Task 1: Create the Repository" duration="5">
+        <p class="image-container"><img alt="Android Architecture Repository" src="img/9aac2da9288e3cb5.png"></p>
+<p>A <code>Repository</code> is a class that abstracts access to multiple data sources. The Repository is not part of the Architecture Components libraries, but is a suggested best practice and we at Flipp have embraced this pattern. It helps us provide a clean API to the rest of the app for app data. Additionally, it helps us unit test viewmodels effectively by providing the option to mock out the repository layer which in turn lets us mock the data sources.</p>
+<p class="image-container"><img alt="Repository" src="img/6c02bc292058ec43.png"></p>
+<h2 is-upgraded>Step 1</h2>
+<p>Create a class called <code>StoreInfoRepository</code> that extends <code>InjectableHelper</code> in the package <code>com.wishabi.flipp.app.storeinfo</code>. By extending <code>InjectableHelper</code> we make this class available to the <code>ServiceManager</code> which is an in-house built <code>ServiceLocator</code>.</p>
+<pre><code>class StoreInfoRepository : InjectableHelper() {}
+</code></pre>
+<h2 is-upgraded>Step 2</h2>
+<p>Add a member function called <code>fetchStoreInfo()</code> that accepts the arguments <code>postalCode</code> and <code>storeName</code>. Mark this function as a <code>suspend</code> function to make it available to coroutines. Let us look at what Coroutines are and how we use them at Flipp in an upcoming codelab, however, here is a quick blurb on what <code>suspend</code> means.</p>
+<p>The keyword suspend is Kotlin&#39;s way of marking a function, or function type, available to coroutines. When a coroutine calls a function marked suspend, instead of blocking until that function returns like a normal function call, it suspends execution until the result is ready then it resumes where it left off with the result. While it&#39;s suspended waiting for a result, it unblocks the thread that it&#39;s running on so other functions or coroutines can run.</p>
+<p>Let the <code>fetchStoreInfo()</code> function return an instance of <code>StoreInfo</code> that we will use in our <code>StoreInfoActivity</code> to display the required information to the user. <br></p>
+<pre><code>suspend fun fetchStoreInfo(postalCode: String, storeName: String): StoreInfo {
+        
+}
+</code></pre>
+<h2 is-upgraded>Step 3</h2>
+<p>For the purpose of this codelab, return a static <code>StoreInfo</code> object from the repository. We will look at how to connect our repository to a network service and a database in upcoming codelabs. Add a 3 second delay before you return <code>StoreInfo</code> to mock a real network or database operation.</p>
+<pre><code>    suspend fun fetchStoreInfo(postalCode: String, storeName: String): StoreInfo {
+        delay(3_000)
+        return StoreInfo(storeName = &#34;Flipp Store&#34;,
+                storeAddress = &#34;3250 Bloor St W Unit 300, Etobicoke, ON M8X 2X9&#34;,
+                storeHours = getStoreHours(),
+                storeContactNumber = &#34;+1 416-626-7092&#34;,
+                storeWebsite = &#34;store.flipp.com&#34;,
+                storeNumReviews = 61,
+                storeRating = 4.5f)
+    }
+</code></pre>
+<h2 is-upgraded>Step 4</h2>
+<p>Add a private method <code>getStoreHours()</code>, that will return a list of static store hours. <br></p>
+<pre><code>    private fun getStoreHours(): List&lt;String&gt; {
+        return mutableListOf(&#34;11AM - 6PM&#34;, &#34;10AM - 8PM&#34;, &#34;10AM - 8PM&#34;, &#34;10AM - 8PM&#34;, &#34;10AM - 8PM&#34;, &#34;10AM - 8PM&#34;, &#34;10AM - 9PM&#34;)
+    }
+</code></pre>
+<p>Here is the complete code for the <code>StoreInfoRepository</code> class:</p>
+<pre><code>class StoreInfoRepository : InjectableHelper() {
+    suspend fun fetchStoreInfo(postalCode: String, storeName: String): StoreInfo {
+        delay(3_000)
+        return StoreInfo(storeName = &#34;Flipp Store&#34;,
+                storeAddress = &#34;3250 Bloor St W Unit 300, Etobicoke, ON M8X 2X9&#34;,
+                storeHours = getStoreHours(),
+                storeContactNumber = &#34;+1 416-626-7092&#34;,
+                storeWebsite = &#34;store.flipp.com&#34;,
+                storeNumReviews = 61,
+                storeRating = 4.5f)
+    }
+
+    private fun getStoreHours(): List&lt;String&gt; {
+        return mutableListOf(&#34;11AM - 6PM&#34;, &#34;10AM - 8PM&#34;, &#34;10AM - 8PM&#34;, &#34;10AM - 8PM&#34;, &#34;10AM - 8PM&#34;, &#34;10AM - 8PM&#34;, &#34;10AM - 9PM&#34;)
+    }
+}
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Task 2: Create the View state wrapper" duration="2">
+        <p>We at Flipp, have been working with the MVVM pattern for a while now and have began to notice several common patterns in each screen:</p>
+<ul>
+<li>show initial loading indicator</li>
+<li>handle failure with an error screen or toast</li>
+<li>provide a meaningful empty state in absence of data</li>
+<li>display the final, loaded data It became apparent and necessary to implement a standard mechanism with whcih to model and display these states.</li>
+</ul>
+<h2 is-upgraded>Our Solution</h2>
+<p>Modeling UI States with Sealed Classes</p>
+<p>Sealed classes are used for representing restricted class hierarchies. As such, sealed classes are useful when modeling states within various app workflows. We&#39;ve leveraged this to simplify the interaction between the activity and the viewmodel.</p>
+<h2 is-upgraded>Step 1</h2>
+<p>Create a sealed class called <code>StoreInfoViewState</code> in the same package as the <code>StoreInfoRepository</code>, <code>com.wishabi.flipp.app.storeinfo</code><br></p>
+<pre><code>sealed class StoreInfoViewState&lt;out T&gt;
+</code></pre>
+<h2 is-upgraded>Step 2</h2>
+<p>Create the following class hierarchy to represent different view states like <code>Success</code>, <code>Loading</code> and <code>Error</code><br></p>
+<pre><code>data class Success&lt;out T&gt;(val value: T): StoreInfoViewState&lt;T&gt;()
+data class Error(val errorMsg: String): StoreInfoViewState&lt;Nothing&gt;()
+object Loading: StoreInfoViewState&lt;Nothing&gt;()
+</code></pre>
+<p>For view states that do not require to hold any data, like in the case of <code>Loading</code>, we can mark them as an <code>object</code> instead of as a <code>class</code>.</p>
+<p>Here is the complete code for the <code>StoreInfoViewState</code> class.<br></p>
+<pre><code>sealed class StoreInfoViewState&lt;out T&gt;
+
+data class Success&lt;out T&gt;(val value: T): StoreInfoViewState&lt;T&gt;()
+data class Error(val errorMsg: String): StoreInfoViewState&lt;Nothing&gt;()
+object Loading: StoreInfoViewState&lt;Nothing&gt;()
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Task 3: Create the ViewModel" duration="10">
+        <p class="image-container"><img alt="Android Architecture ViewModel" src="img/b8f6a76062fb96b1.png"></p>
+<p>The <code>ViewModel</code> is a class whose role is to provide data to the UI and survive configuration changes. A viewmodel acts as a communication center between the repository (data layer) and the UI. At Flipp, we use the <code>ViewModel</code> to separate out the app&#39;s UI data from our Activities and Fragments to better follow the single responsibility principle, where we want our activities and fragments to be only responsible for drawing data to the screen, while our <code>ViewModel</code> is responsible for holding and processing all the data needed for the UI.</p>
+<p>In the <code>ViewModel</code>, we use <code>LiveData</code> for changeable data that the UI will use or display.</p>
+<h2 is-upgraded>Step 1</h2>
+<p>Create a class called <code>StoreInfoViewModel</code> that extends <code>ViewModel</code> in the package <code>package com.wishabi.flipp.app.storeinfo</code>.<br></p>
+<pre><code>class StoreInfoActivityViewModel : ViewModel() {}
+</code></pre>
+<h2 is-upgraded>Step 2</h2>
+<p>Modify the constructor to accept <code>StoreInfoRepository</code> as an argument.<br></p>
+<pre><code>class StoreInfoActivityViewModel(private val repository: StoreInfoRepository) : ViewModel() {}
+</code></pre>
+<h2 is-upgraded>Step 3</h2>
+<p>Add a private <code>MutableLiveData</code> member variable to hold the fetched <code>StoreInfo</code> object, which is wrapped in the above created <code>StoreInforViewState</code> UI state sealed class.<br></p>
+<pre><code>private var _storeInfo: MutableLiveData&lt;StoreInfoViewState&lt;StoreInfo&gt;&gt; = MutableLiveData()
+</code></pre>
+<h2 is-upgraded>Step 4</h2>
+<p>Add a public <code>LiveData</code> member variable that exposes the above <code>MutableLiveData</code> object, <code>_storeInfo</code> to our activity <code>StoreInfoActivity</code>.<br></p>
+<pre><code>val storeInfo: LiveData&lt;StoreInfoViewState&lt;StoreInfo&gt;&gt;
+        get() = _storeInfo
+</code></pre>
+<p>We follow the above practice of not exposing the <code>MutableLiveData</code> to the activity to prevent the view layer (Activity) from modifying data.</p>
+<h2 is-upgraded>Step 5</h2>
+<p>Add two private <code>String?</code> member variables to to store <code>postalCode</code> and <code>storeName</code>.<br></p>
+<pre><code>private var postalCode: String? = null
+private var storeName: String? = null
+</code></pre>
+<h2 is-upgraded>Step 6</h2>
+<p>Create a public <code>fetchStoreInfo()</code> method that accepts two arguments: <code>postalCode: String</code> and <code>storeName: String</code>.</p>
+<pre><code>    fun fetchPostalCode(postalCode: String?, storeName: String?) {
+        
+    }
+</code></pre>
+<h2 is-upgraded>Step 7</h2>
+<p>Modify the above created <code>fetchStoreInfo()</code> method to call the <code>StoreInfoRepository</code>&#39;s <code>fetchStoreInfo()</code> method to fetch the required <code>StoreInfo</code>.<br></p>
+<pre><code>fun fetchStoreInfo(postalCode: String?, storeName: String?) {
+  this.postalCode = postalCode
+  this.storeName = storeName
+        
+  repository.fetchStoreInfo(postalCode, storeName)
+}
+</code></pre>
+<p>Once you add the above code, you will notice that the IDE throws a compile time exception, indicating that a <code>suspend</code> function should only be called from a <code>coroutine</code> or another suspend function. To limit the scope of this codelab, copy paste the following piece of code that creates a <code>coroutine</code> and updates the <code>MutableLiveData</code> in our viewmodel.<br></p>
+<pre><code>fun fetchStoreInfo(postalCode: String?, storeName: String?) {
+        this.postalCode = postalCode
+        this.storeName = storeName
+
+        viewModelScope.launch { 
+            try {
+                val storeInfo = repository.fetchStoreInfo(postalCode, storeName)
+                _storeInfo.postValue(Success(storeInfo))
+            } catch (e: Exception) {
+                _storeInfo.postValue(Error(&#34;There was an error fetching store information&#34;))
+            }
+        }
+    }
+</code></pre>
+<p>The above code will make more sense when you complete the upcoming code lab on how to work with <code>Coroutines</code>.</p>
+<h2 is-upgraded>Step 8</h2>
+<p>To prevent duplicate calls being made to the repository, add a check to see if the activity is requesting information for the same postal code and store name. Additionally, check whether the current value of the <code>_storeInfo</code> live data is of type <code>Success</code>.<br></p>
+<pre><code>fun fetchStoreInfo(postalCode: String?, storeName: String?) {
+        if (postalCode.isNullOrEmpty() || storeName.isNullOrEmpty()) {
+            _storeInfo.postValue(Error(&#34;Invalid postal code or store name&#34;))
+            return
+        }
+
+        if (_storeInfo.value is Success 
+                &amp;&amp; this.postalCode.equals(postalCode, ignoreCase = true) 
+                &amp;&amp; this.storeName.equals(storeName, ignoreCase = 
+                true)) {
+            return
+        }
+        
+        this.postalCode = postalCode
+        this.storeName = storeName
+
+        viewModelScope.launch {
+            try {
+                val storeInfo = repository.fetchStoreInfo(postalCode, storeName)
+                _storeInfo.postValue(Success(storeInfo))
+            } catch (e: Exception) {
+                _storeInfo.postValue(Error(&#34;There was an error fetching store information&#34;))
+            }
+        }
+    }
+</code></pre>
+<h2 is-upgraded>Step 9</h2>
+<p>To indicate to the activity that the request is in progress, we can make use of the <code>Loading</code> UI state. Modify the above method to first set the value of <code>_storeInfo</code> to a <code>Loading</code> object.<br></p>
+<pre><code>fun fetchStoreInfo(postalCode: String, storeName: String) {
+        if (postalCode.isNullOrEmpty() || storeName.isNullOrEmpty()) {
+            _storeInfo.postValue(Error(&#34;Invalid postal code or store name&#34;))
+            return
+        }
+
+        if (_storeInfo.value is Success
+                &amp;&amp; this.postalCode.equals(postalCode, ignoreCase = true)
+                &amp;&amp; this.storeName.equals(storeName, ignoreCase =
+                true)) {
+            return
+        }
+
+        _storeInfo.postValue(Loading)
+        
+        this.postalCode = postalCode
+        this.storeName = storeName
+
+        viewModelScope.launch {
+            try {
+                val storeInfo = repository.fetchStoreInfo(postalCode, storeName)
+                _storeInfo.postValue(Success(storeInfo))
+            } catch (e: Exception) {
+                _storeInfo.postValue(Error(&#34;There was an error fetching store information&#34;))
+            }
+        }
+    }
+</code></pre>
+<p>Here is the complete code for the <code>StoreInfoViewModel</code> class.</p>
+<pre><code>class StoreInfoActivityViewModel(private val repository: StoreInfoRepository) : ViewModel() {
+    private var _storeInfo: MutableLiveData&lt;StoreInfoViewState&lt;StoreInfo&gt;&gt; = MutableLiveData()
+
+    val storeInfo: LiveData&lt;StoreInfoViewState&lt;StoreInfo&gt;&gt;
+        get() = _storeInfo
+
+    private var postalCode: String? = null
+    private var storeName: String? = null
+
+    fun fetchStoreInfo(postalCode: String, storeName: String) {
+        if (postalCode.isNullOrEmpty() || storeName.isNullOrEmpty()) {
+            _storeInfo.postValue(Error(&#34;Invalid postal code or store name&#34;))
+            return
+        }
+
+        if (_storeInfo.value is Success
+                &amp;&amp; this.postalCode.equals(postalCode, ignoreCase = true)
+                &amp;&amp; this.storeName.equals(storeName, ignoreCase =
+                true)) {
+            return
+        }
+
+        _storeInfo.postValue(Loading)
+
+        this.postalCode = postalCode
+        this.storeName = storeName
+
+        viewModelScope.launch {
+            try {
+                val storeInfo = repository.fetchStoreInfo(postalCode, storeName)
+                _storeInfo.postValue(Success(storeInfo))
+            } catch (e: Exception) {
+                _storeInfo.postValue(Error(&#34;There was an error fetching store information&#34;))
+            }
+        }
+    }
+}
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Task 4: Implement the ViewModelFactory" duration="0">
+        <p><code>ViewModel</code> depends on the <code>StoreInfoRepository</code> you need create a <code>ViewModelFactory</code> that will help creating the <code>ViewModel</code> when you request for it from the <code>Activity</code>.</p>
+<h2 is-upgraded>Step 1</h2>
+<p>Create a new class <code>StoreInfoViewModelFactory</code> that extends <code>ViewModelProvider.NewinstanceFactory</code> in the package <code>com.wishabi.flipp.app.storeinfo</code>.</p>
+<pre><code>class StoreInfoViewModelFactory() : ViewModelProvider.NewInstanceFactory() {}
+</code></pre>
+<h2 is-upgraded>Step 2</h2>
+<p>Override the <code>create()</code> method that is provided by the <code>NewInstanceFactory</code> and add the following code in.</p>
+<pre><code>override fun &lt;T : ViewModel?&gt; create(modelClass: Class&lt;T&gt;): T {
+    val storeInfoRepository = ServiceManager.getService(StoreInfoRepository::class.java)
+
+    return when (modelClass) {
+        StoreInfoActivityViewModel::class.java -&gt; {
+            StoreInfoActivityViewModel(storeInfoRepository) as T
+        }
+        else -&gt; throw IllegalArgumentException(&#34;View Model not found&#34;)
+    }
+}
+</code></pre>
+<p>The above code creates an instance of the <code>StoreInfoRepository</code> and injects it into the instance of the <code>StoreInfoActivityViewModel</code> that we create.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Task 5: Connect the UI with the data" duration="5">
+        <p>Now that you have created the all the necessary components to fetch the data, let us now connect these parts to the <code>StoreInfoActivity</code> to display the data. To display the data from the repository, you add an observer that observes the <code>LiveData</code> in the <code>StoreInfoActivityViewModel</code>. Whenever the data changes, the <code>onChanged()</code> callback of the <code>LiveData</code> is invoked.</p>
+<h2 is-upgraded>Step 1</h2>
+<p>In <code>StoreInfoActivity</code>, create a member variable for the <code>ViewModel</code>, because all the activity&#39;s interactions are with the <code>StoreInfoActivityViewModel</code> only.</p>
+<pre><code>private val storeInfoActivityViewModel: StoreInfoActivityViewModel by lazy {
+    ViewModelProvider(this, StoreInfoViewModelFactory()).get(StoreInfoActivityViewModel::class.java)
+}
+</code></pre>
+<h2 is-upgraded>Step 2</h2>
+<p>In the <code>onCreate()</code>, add an observer for the <code>LiveDatastoreInfo</code> present in the <code>StoreInfoActivityViewModel</code>. When the observed data changes while the activity is in the foreground, the <code>onChanged()</code> method is invoked and you can set the updated data to the UI widgets.</p>
+<pre><code>storeInfoActivityViewModel.storeInfo.observe(this, Observer { storeInfoViewState -&gt;
+  storeInfoViewState?.let {
+      when(it) {
+          is Success -&gt; updateUI(it)
+          is Error -&gt; showError(it)
+          is Loading -&gt; showLoading()
+      }
+    }
+})
+</code></pre>
+<h2 is-upgraded>Step 3</h2>
+<p>Add a private function <code>updateUI()</code> in the <code>StoreInfoActivity</code>, that accepts an instance of <code>Success&lt;StoreInfo&gt;</code> view state and sets the required values to the UI widgets based on the data that we receive from the <code>ViewModel</code>.</p>
+<pre><code>private fun updateUI(data: Success&lt;StoreInfo&gt;) {
+    store_info_progress_bar.visibility = View.GONE
+    val storeInfo = data.value
+    
+    store_name_text_view.text = storeInfo.storeName
+    store_address_text_view.text = storeInfo.storeAddress
+    
+    store_hours_sunday_text_view.text = storeInfo.storeHours[0]
+    store_hours_monday_text_view.text = storeInfo.storeHours[1]
+    store_hours_tuesday_text_view.text = storeInfo.storeHours[2]
+    store_hours_wednesday_text_view.text = storeInfo.storeHours[3]
+    store_hours_thursday_text_view.text = storeInfo.storeHours[4]
+    store_hours_friday_text_view.text = storeInfo.storeHours[5]
+    store_hours_saturday_text_view.text = storeInfo.storeHours[6]
+    
+    store_contact_info_text_view.text = storeInfo.storeContactNumber
+    store_website_text_view.text = storeInfo.storeWebsite
+    
+    store_rating_bar.rating = storeInfo.storeRating
+    store_rating_text_view.text = getString(R.string.code_lab_review_text, storeInfo.storeRating, storeInfo.storeNumReviews)
+}
+</code></pre>
+<h2 is-upgraded>Step 4</h2>
+<p>Add a private function <code>showError()</code> in the <code>StoreInfoActivity</code>, that accepts an instance of <code>Error</code> view state and displays a toast message to the user.</p>
+<pre><code>private fun showError(error: Error) {
+    store_info_progress_bar.visibility = View.GONE
+    Toast.makeText(this, error.errorMsg, Toast.LENGTH_LONG).show()
+}
+</code></pre>
+<h2 is-upgraded>Step 5</h2>
+<p>Add a private function <code>showLoading()</code> in the <code>StoreInfoActivity</code>, that sets the visibility of the <code>ProgressBar</code> with id <code>store_info_progress_bar</code> to <code>View.VISIBLE</code>.</p>
+<pre><code>private fun showLoading() {
+    store_info_progress_bar.visibility = View.VISIBLE
+}
+</code></pre>
+<h2 is-upgraded>Step 6</h2>
+<p>Make sure to set the visibility of the above mentioned <code>ProgressBar</code> to <code>View.GONE</code> in both the <code>updateUI()</code> and <code>showError()</code> methods.</p>
+<h2 is-upgraded>Step 7</h2>
+<p>The final step is to call the <code>fetchStoreInfo()</code> method in the <code>ViewModel</code>. You can use the <code>storeName</code> and <code>postalCode</code> that you receive as part of the <code>Intent</code> bundle that was used to start this <code>Activity</code>. Add the following code to the <code>onCreate()</code> method to read <code>postalCode</code> and <code>storeName</code> from the intent bundle. You can use the declared constants <code>PARAM_POSTAL_CODE</code> and <code>PARAM_STORE_NAME</code> as keys when requesting the values from the intent. Finally, call the method in the viewmodel to fetch the data. Your <code>onCreate()</code> method should look something like this after making all these changes.</p>
+<pre><code>override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_store_info)
+
+    val storeName = intent.getStringExtra(PARAM_STORE_NAME)
+    val postalCode = intent.getStringExtra(PARAM_POSTAL_CODE)
+
+    storeInfoActivityViewModel.storeInfo.observe(this, Observer { storeInfoViewState -&gt;
+        storeInfoViewState?.let {
+            when(it) {
+                is Success -&gt; updateUI(it)
+                is Error -&gt; showError(it)
+                is Loading -&gt; showLoading()
+            }
+        }
+    })
+
+    storeInfoActivityViewModel.fetchStoreInfo(postalCode, storeName)
+}
+</code></pre>
+<p>Here is the complete code for the <code>StoreInfoActivity</code> class.</p>
+<pre><code>class StoreInfoActivity : AppCompatActivity() {
+
+  companion object {
+      public const val PARAM_STORE_NAME = &#34;param_store_name&#34;
+      public const val PARAM_POSTAL_CODE = &#34;postal_code&#34;
+  }
+
+  private val storeInfoActivityViewModel: StoreInfoActivityViewModel by lazy {
+        ViewModelProvider(this, StoreInfoViewModelFactory()).get(StoreInfoActivityViewModel::class.java)
+    }
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+      super.onCreate(savedInstanceState)
+      setContentView(R.layout.activity_store_info)
+
+      val storeName = intent.getStringExtra(PARAM_STORE_NAME)
+      val postalCode = intent.getStringExtra(PARAM_POSTAL_CODE)
+
+      storeInfoActivityViewModel.storeInfo.observe(this, Observer { storeInfoViewState -&gt;
+          storeInfoViewState?.let {
+              when(it) {
+                  is Success -&gt; updateUI(it)
+                  is Error -&gt; showError(it)
+                  is Loading -&gt; showLoading()
+              }
+          }
+      })
+
+      storeInfoActivityViewModel.fetchStoreInfo(postalCode, storeName)
+  }
+
+  private fun showLoading() {
+      store_info_progress_bar.visibility = View.VISIBLE
+  }
+
+  private fun showError(error: Error) {
+      store_info_progress_bar.visibility = View.GONE
+      Toast.makeText(this, error.errorMsg, Toast.LENGTH_LONG).show()
+  }
+
+  private fun updateUI(data: Success&lt;StoreInfo&gt;) {
+      store_info_progress_bar.visibility = View.GONE
+      val storeInfo = data.value
+
+      store_name_text_view.text = storeInfo.storeName
+      store_address_text_view.text = storeInfo.storeAddress
+
+      store_hours_sunday_text_view.text = storeInfo.storeHours[0]
+      store_hours_monday_text_view.text = storeInfo.storeHours[1]
+      store_hours_tuesday_text_view.text = storeInfo.storeHours[2]
+      store_hours_wednesday_text_view.text = storeInfo.storeHours[3]
+      store_hours_thursday_text_view.text = storeInfo.storeHours[4]
+      store_hours_friday_text_view.text = storeInfo.storeHours[5]
+      store_hours_saturday_text_view.text = storeInfo.storeHours[6]
+
+      store_contact_info_text_view.text = storeInfo.storeContactNumber
+      store_website_text_view.text = storeInfo.storeWebsite
+
+      store_rating_bar.rating = storeInfo.storeRating
+      store_rating_text_view.text = getString(R.string.code_lab_review_text, storeInfo.storeRating, storeInfo.storeNumReviews)
+  }
+}
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Task 6: Databinding" duration="2">
+        <p>Now that you have all the components working together, let us look at how <code>Databinding</code> can help to clean up your UI code.</p>
+<h2 is-upgraded>Step 1</h2>
+<p>Data Binding has already been enabled on the Flipp Project. Let us convert our view <code>activity_store_info.xml</code> to support data binding. Open <code>activity_store_info.xml</code>. It is a regular layout with a ConstraintLayout as the root element.</p>
+<p>In order to convert the layout to Data Binding, you need to wrap the root element in a  tag. You&#39;ll also have to move the namespace definitions (the attributes that start with xmlns:) to the new root element.</p>
+<p>Android Studio offers a handy way to do this automatically: Right-click the root element, select Show Context Actions, then Convert to data binding layout: <img alt="Convert to data binding" src="img/1e76b327eaafdb2b.png"></p>
+<p>Your layout should now look like this:</p>
+<pre><code>&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;
+&lt;!-- Copyright (c) 2020 Wishabi. All rights reserved. --&gt;
+
+&lt;layout xmlns:android=&#34;http://schemas.android.com/apk/res/android&#34;
+    xmlns:app=&#34;http://schemas.android.com/apk/res-auto&#34;
+    xmlns:tools=&#34;http://schemas.android.com/tools&#34;&gt;
+
+    &lt;data&gt;
+
+    &lt;/data&gt;
+
+    &lt;androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width=&#34;match_parent&#34;
+        android:layout_height=&#34;match_parent&#34;
+        android:background=&#34;@android:color/white&#34;&gt;
+
+        &lt;androidx.constraintlayout.widget.Guideline
+            android:id=&#34;@+id/start_guideline&#34;
+            android:layout_width=&#34;wrap_content&#34;
+            android:layout_height=&#34;wrap_content&#34;
+            android:orientation=&#34;vertical&#34;
+            app:layout_constraintGuide_begin=&#34;@dimen/dimen_16dp&#34; /&gt;
+</code></pre>
+<p>The <code>&lt;data&gt;</code> tag will contain layout variables.</p>
+<p>Layout variables are used to write layout expressions. Layout expressions are placed in the value of element attributes and they use the <code>@{expression}</code> format. Here are some examples:</p>
+<pre><code>android:text=&#34;@{String.valueOf(index + 1)}&#34;
+android:visibility=&#34;@{age &lt; 13 ? View.GONE : View.VISIBLE}&#34;
+android:transitionName=&#39;@{&#34;image_&#34; + id}&#39;
+</code></pre>
+<p>Some of the advantages that we noticed by using layout expressions to bind components in the layout file are:</p>
+<ul>
+<li>Help prevent memory leaks and null pointer exceptions</li>
+<li>Streamline our activity&#39;s code by removing UI framework calls</li>
+</ul>
+<p>Now, let&#39;s modify your <code>StoreInfoActivityViewModel</code> to work with databinding.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Task 7 Modify ViewModel to support data binding" duration="5">
+        <h2 is-upgraded>Step 1</h2>
+<p>Open <code>StoreInfoActivityViewModel</code> and add the following <code>LiveData</code> fields to allow binding to the different UI elements.</p>
+<pre><code>var storeNameLiveData = MutableLiveData(&#34;&#34;)
+var storeAddressLiveData = MutableLiveData(&#34;&#34;)
+var sundayStoreHoursLiveData = MutableLiveData(&#34;&#34;)
+var mondayStoreHoursLiveData = MutableLiveData(&#34;&#34;)
+var tuesdayStoreHoursLiveData = MutableLiveData(&#34;&#34;)
+var wednesdayStoreHoursLiveData = MutableLiveData(&#34;&#34;)
+var thursdayStoreHoursLiveData = MutableLiveData(&#34;&#34;)
+var fridayStoreHoursLiveData = MutableLiveData(&#34;&#34;)
+var saturdayStoreHoursLiveData = MutableLiveData(&#34;&#34;)
+var storeContactNumberLiveData = MutableLiveData(&#34;&#34;)
+var storeWebsiteLiveData = MutableLiveData(&#34;&#34;)
+var storeRatingLiveData = MutableLiveData(0f)
+var storeNumReviewsLiveData = MutableLiveData(0)
+var loadingLiveData = MutableLiveData(true)
+</code></pre>
+<h2 is-upgraded>Step 2</h2>
+<p>Modify the <code>fetchStoreInfo()</code> method to update the above declared <code>LiveData</code> variables.</p>
+<pre><code>fun fetchStoreInfo(postalCode: String?, storeName: String?) {
+    if (postalCode.isNullOrEmpty() || storeName.isNullOrEmpty()) {
+        _storeInfo.postValue(Error(&#34;Invalid postal code or store name&#34;))
+        return
+    }
+
+    if (_storeInfo.value is Success
+            &amp;&amp; this.postalCode.equals(postalCode, ignoreCase = true)
+            &amp;&amp; this.storeName.equals(storeName, ignoreCase =
+            true)) {
+        return
+    }
+
+    loadingLiveData.postValue(true)
+
+    this.postalCode = postalCode
+    this.storeName = storeName
+
+    viewModelScope.launch {
+        try {
+            val storeInfo = repository.fetchStoreInfo(postalCode, storeName)
+
+            storeNameLiveData.postValue(storeInfo.storeName)
+            storeAddressLiveData.postValue(storeInfo.storeAddress)
+            sundayStoreHoursLiveData.postValue(storeInfo.storeHours[0])
+            mondayStoreHoursLiveData.postValue(storeInfo.storeHours[1])
+            tuesdayStoreHoursLiveData.postValue(storeInfo.storeHours[2])
+            wednesdayStoreHoursLiveData.postValue(storeInfo.storeHours[3])
+            thursdayStoreHoursLiveData.postValue(storeInfo.storeHours[4])
+            fridayStoreHoursLiveData.postValue(storeInfo.storeHours[5])
+            saturdayStoreHoursLiveData.postValue(storeInfo.storeHours[6])
+            storeWebsiteLiveData.postValue(storeInfo.storeWebsite)
+            storeContactNumberLiveData.postValue(storeInfo.storeContactNumber)
+            storeRatingLiveData.postValue(storeInfo.storeRating)
+            storeNumReviewsLiveData.postValue(storeInfo.storeNumReviews)
+
+            loadingLiveData.postValue(false)
+        } catch (e: Exception) {
+            _storeInfo.postValue(Error(&#34;There was an error fetching store information&#34;))
+            loadingLiveData.postValue(false)
+        }
+    }
+}
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Task 8: Using layout expressions" duration="10">
+        <p>Let&#39;s start with binding our <code>ViewModel</code>.</p>
+<h2 is-upgraded>Step 1</h2>
+<p>Create a variable to hold our <code>StoreInfoActivityViewModel</code> inside the <code>&lt;data&gt;</code> tag.</p>
+<pre><code>&lt;data&gt;
+    &lt;variable name=&#34;storeInfoActivityViewModel&#34; 
+        type=&#34;com.wishabi.flipp.app.storeinfo.StoreInfoActivityViewModel&#34; /&gt;
+&lt;/data&gt;
+</code></pre>
+<h2 is-upgraded>Step 2</h2>
+<p>Look for the TextView with ID <code>store_name_text_view</code> and add the <code>android:text</code> attribute with a layout expression:</p>
+<pre><code>&lt;TextView
+  android:id=&#34;@+id/store_name_text_view&#34;
+  style=&#34;@style/Flipp.Typography.Title&#34;
+  android:layout_width=&#34;wrap_content&#34;
+  android:layout_height=&#34;wrap_content&#34;
+  android:text=&#34;@{storeInfoActivityViewModel.storeNameLiveData}&#34;
+  android:textColor=&#34;@color/primary3&#34;
+  app:layout_constraintStart_toStartOf=&#34;@+id/start_guideline&#34;
+  app:layout_constraintTop_toTopOf=&#34;@+id/top_guideline&#34;
+  tools:text=&#34;Flipp Store&#34; /&gt;
+</code></pre>
+<h2 is-upgraded>Step 3</h2>
+<p>Look for the TextView with ID <code>store_address_text_view</code> and add the <code>android:text</code> attribute with a layout expression:</p>
+<pre><code>&lt;TextView
+  android:id=&#34;@+id/store_address_text_view&#34;
+  style=&#34;@style/Flipp.Typography.SubHeader&#34;
+  android:layout_width=&#34;wrap_content&#34;
+  android:layout_height=&#34;wrap_content&#34;
+  android:text=&#34;@{storeInfoActivityViewModel.storeAddressLiveData}&#34;
+  android:layout_marginTop=&#34;8dp&#34;
+  android:maxLines=&#34;2&#34;
+  android:textColor=&#34;@color/default3&#34;
+  app:layout_constraintStart_toStartOf=&#34;@+id/start_guideline&#34;
+  app:layout_constraintTop_toBottomOf=&#34;@+id/store_name_text_view&#34;
+  tools:text=&#34;300 North St \nBuffalo, New York, 10001&#34; /&gt;
+</code></pre>
+<h2 is-upgraded>Step 4</h2>
+<p>Look for the TextView with ID <code>store_hours_sunday_text_view</code> and add the <code>android:text</code> attribute with a layout expression:</p>
+<pre><code>&lt;TextView
+  android:id=&#34;@+id/store_hours_sunday_text_view&#34;
+  android:layout_width=&#34;wrap_content&#34;
+  android:layout_height=&#34;wrap_content&#34;
+  android:text=&#34;@{storeInfoActivityViewModel.sundayStoreHoursLiveData}&#34;
+  android:layout_marginStart=&#34;@dimen/dimen_16dp&#34;
+  android:layout_marginTop=&#34;@dimen/dimen_8dp&#34;
+  app:layout_constraintStart_toEndOf=&#34;@+id/store_hours_title_barrier&#34;
+  app:layout_constraintTop_toBottomOf=&#34;@+id/store_hours_title_text_view&#34;
+  tools:text=&#34;11AM - 6PM&#34; /&gt;
+</code></pre>
+<p>Repeat the same for the following IDs <code>store_hours_monday_text_view</code>, <code>store_hours_tuesday_text_view</code>, <code>store_hours_wednesday_text_view</code>, <code>store_hours_thursday_text_view</code>, <code>store_hours_friday_text_view</code> and <code>store_hours_saturday_text_view</code> and bind them to the appropriate <code>LiveData</code> members in the ViewModel.</p>
+<p>Here is how the above TextViews will look like after these changes are done:</p>
+<pre><code>&lt;TextView
+    android:id=&#34;@+id/store_hours_sunday_text_view&#34;
+    android:layout_width=&#34;wrap_content&#34;
+    android:layout_height=&#34;wrap_content&#34;
+    android:text=&#34;@{storeInfoActivityViewModel.sundayStoreHoursLiveData}&#34;
+    android:layout_marginStart=&#34;@dimen/dimen_16dp&#34;
+    android:layout_marginTop=&#34;@dimen/dimen_8dp&#34;
+    app:layout_constraintStart_toEndOf=&#34;@+id/store_hours_title_barrier&#34;
+    app:layout_constraintTop_toBottomOf=&#34;@+id/store_hours_title_text_view&#34;
+    tools:text=&#34;11AM - 6PM&#34; /&gt;
+
+&lt;TextView
+    android:id=&#34;@+id/store_hours_monday_text_view&#34;
+    android:layout_width=&#34;wrap_content&#34;
+    android:layout_height=&#34;wrap_content&#34;
+    android:text=&#34;@{storeInfoActivityViewModel.mondayStoreHoursLiveData}&#34;
+    android:layout_marginStart=&#34;@dimen/dimen_16dp&#34;
+    android:layout_marginTop=&#34;@dimen/dimen_4dp&#34;
+    app:layout_constraintStart_toEndOf=&#34;@+id/store_hours_title_barrier&#34;
+    app:layout_constraintTop_toBottomOf=&#34;@+id/store_hours_sunday_text_view&#34;
+    tools:text=&#34;10AM - 9PM&#34; /&gt;
+
+&lt;TextView
+    android:id=&#34;@+id/store_hours_tuesday_text_view&#34;
+    android:layout_width=&#34;wrap_content&#34;
+    android:layout_height=&#34;wrap_content&#34;
+    android:text=&#34;@{storeInfoActivityViewModel.tuesdayStoreHoursLiveData}&#34;
+    android:layout_marginStart=&#34;@dimen/dimen_16dp&#34;
+    android:layout_marginTop=&#34;@dimen/dimen_4dp&#34;
+    app:layout_constraintStart_toEndOf=&#34;@+id/store_hours_title_barrier&#34;
+    app:layout_constraintTop_toBottomOf=&#34;@+id/store_hours_monday_text_view&#34;
+    tools:text=&#34;10AM - 9PM&#34; /&gt;
+
+&lt;TextView
+    android:id=&#34;@+id/store_hours_wednesday_text_view&#34;
+    android:layout_width=&#34;wrap_content&#34;
+    android:layout_height=&#34;wrap_content&#34;
+    android:text=&#34;@{storeInfoActivityViewModel.wednesdayStoreHoursLiveData}&#34;
+    android:layout_marginStart=&#34;@dimen/dimen_16dp&#34;
+    android:layout_marginTop=&#34;@dimen/dimen_4dp&#34;
+    app:layout_constraintStart_toEndOf=&#34;@+id/store_hours_title_barrier&#34;
+    app:layout_constraintTop_toBottomOf=&#34;@+id/store_hours_tuesday_text_view&#34;
+    tools:text=&#34;10AM - 9PM&#34; /&gt;
+
+&lt;TextView
+    android:id=&#34;@+id/store_hours_thursday_text_view&#34;
+    android:layout_width=&#34;wrap_content&#34;
+    android:layout_height=&#34;wrap_content&#34;
+    android:text=&#34;@{storeInfoActivityViewModel.thursdayStoreHoursLiveData}&#34;
+    android:layout_marginStart=&#34;@dimen/dimen_16dp&#34;
+    android:layout_marginTop=&#34;@dimen/dimen_4dp&#34;
+    app:layout_constraintStart_toEndOf=&#34;@+id/store_hours_title_barrier&#34;
+    app:layout_constraintTop_toBottomOf=&#34;@+id/store_hours_wednesday_text_view&#34;
+    tools:text=&#34;10AM - 9PM&#34; /&gt;
+
+&lt;TextView
+    android:id=&#34;@+id/store_hours_friday_text_view&#34;
+    android:layout_width=&#34;wrap_content&#34;
+    android:layout_height=&#34;wrap_content&#34;
+    android:text=&#34;@{storeInfoActivityViewModel.fridayStoreHoursLiveData}&#34;
+    android:layout_marginStart=&#34;@dimen/dimen_16dp&#34;
+    android:layout_marginTop=&#34;@dimen/dimen_4dp&#34;
+    app:layout_constraintStart_toEndOf=&#34;@+id/store_hours_title_barrier&#34;
+    app:layout_constraintTop_toBottomOf=&#34;@+id/store_hours_thursday_text_view&#34;
+    tools:text=&#34;10AM - 9PM&#34; /&gt;
+
+&lt;TextView
+    android:id=&#34;@+id/store_hours_saturday_text_view&#34;
+    android:layout_width=&#34;wrap_content&#34;
+    android:layout_height=&#34;wrap_content&#34;
+    android:text=&#34;@{storeInfoActivityViewModel.saturdayStoreHoursLiveData}&#34;
+    android:layout_marginStart=&#34;@dimen/dimen_16dp&#34;
+    android:layout_marginTop=&#34;@dimen/dimen_4dp&#34;
+    app:layout_constraintStart_toEndOf=&#34;@+id/store_hours_title_barrier&#34;
+    app:layout_constraintTop_toBottomOf=&#34;@+id/store_hours_friday_text_view&#34;
+    tools:text=&#34;11AM - 6PM&#34; /&gt;
+</code></pre>
+<h2 is-upgraded>Step 5</h2>
+<p>Look for the TextView with ID <code>store_contact_info_text_view</code> and add the <code>android:text</code> attribute with a layout expression:</p>
+<pre><code>&lt;TextView
+  android:id=&#34;@+id/store_contact_info_text_view&#34;
+  android:layout_width=&#34;0dp&#34;
+  android:layout_height=&#34;wrap_content&#34;
+  android:text=&#34;@{storeInfoActivityViewModel.storeContactNumberLiveData}&#34;
+  android:layout_marginTop=&#34;@dimen/dimen_8dp&#34;
+  app:layout_constraintEnd_toStartOf=&#34;@+id/store_contact_info_guide_line&#34;
+  app:layout_constraintStart_toStartOf=&#34;@+id/start_guideline&#34;
+  app:layout_constraintTop_toBottomOf=&#34;@+id/store_contact_info_title_text_view&#34;
+  tools:text=&#34;+1 404-456-7890&#34; /&gt;
+</code></pre>
+<h2 is-upgraded>Step 6</h2>
+<p>Look for the TextView with ID <code>store_webstie_text_view</code> and add the <code>android:text</code> attribute with a layout expression:</p>
+<pre><code>&lt;TextView
+  android:id=&#34;@+id/store_website_text_view&#34;
+  android:layout_width=&#34;0dp&#34;
+  android:layout_height=&#34;wrap_content&#34;
+  android:text=&#34;@{storeInfoActivityViewModel.storeWebsiteLiveData}&#34;
+  android:layout_marginStart=&#34;@dimen/dimen_8dp&#34;
+  android:layout_marginTop=&#34;@dimen/dimen_8dp&#34;
+  android:maxLines=&#34;2&#34;
+  app:layout_constraintEnd_toStartOf=&#34;@+id/end_guideline&#34;
+  app:layout_constraintStart_toEndOf=&#34;@+id/store_contact_info_text_view&#34;
+  app:layout_constraintTop_toBottomOf=&#34;@+id/store_website_title_text_view&#34;
+  tools:text=&#34;store.flipp.com&#34; /&gt;
+</code></pre>
+<h2 is-upgraded>Step 7</h2>
+<p>Look for the RatingBar with ID <code>store_rating_bar</code> and add the <code>android:rating</code> attribute with a layout expression:</p>
+<pre><code>&lt;RatingBar
+  android:id=&#34;@+id/store_rating_bar&#34;
+  android:layout_width=&#34;wrap_content&#34;
+  android:layout_height=&#34;wrap_content&#34;
+  android:rating=&#34;@{storeInfoActivityViewModel.storeRatingLiveData}&#34;
+  android:progressTint=&#34;@color/primary3&#34;
+  android:layout_marginTop=&#34;@dimen/dimen_8dp&#34;
+  android:isIndicator=&#34;true&#34;
+  android:numStars=&#34;5&#34;
+  android:stepSize=&#34;0.5&#34;
+  app:layout_constraintStart_toStartOf=&#34;@+id/start_guideline&#34;
+  app:layout_constraintTop_toBottomOf=&#34;@+id/store_reviews_title_text_view&#34; /&gt;
+</code></pre>
+<h2 is-upgraded>Step 8</h2>
+<p>Look for the TextView with ID <code>store_rating_text_view</code> and add the <code>android:text</code> attribute with a layout expression:</p>
+<pre><code> &lt;TextView
+  android:id=&#34;@+id/store_rating_text_view&#34;
+  android:layout_width=&#34;wrap_content&#34;
+  android:layout_height=&#34;wrap_content&#34;
+  android:text=&#34;@{String.format(@string/code_lab_review_text, storeInfoActivityViewModel.storeRatingLiveData, storeInfoActivityViewModel.storeNumReviewsLiveData)}&#34;
+  android:layout_marginStart=&#34;4dp&#34;
+  android:layout_marginTop=&#34;@dimen/dimen_4dp&#34;
+  tools:text=&#34;4.3 (120 Reviews)&#34;
+  app:layout_constraintStart_toStartOf=&#34;@+id/start_guideline&#34;
+  app:layout_constraintTop_toBottomOf=&#34;@+id/store_rating_bar&#34; /&gt;
+</code></pre>
+<h2 is-upgraded>Step 9</h2>
+<p>Finally, look for the ProgressBar with ID <code>store_info_progress_bar</code> and modify the <code>android:visibility</code> attribute with a layout expression:</p>
+<pre><code>&lt;ProgressBar
+  android:id=&#34;@+id/store_info_progress_bar&#34;
+  style=&#34;?android:attr/progressBarStyle&#34;
+  android:layout_width=&#34;wrap_content&#34;
+  android:layout_height=&#34;wrap_content&#34;
+  android:visibility=&#34;@{storeInfoActivityViewModel.loadingLiveData ? View.VISIBLE : View.GONE}&#34;
+  tools:visibility=&#34;visible&#34;
+  app:layout_constraintStart_toEndOf=&#34;@id/start_guideline&#34;
+  app:layout_constraintEnd_toStartOf=&#34;@id/end_guideline&#34;
+  app:layout_constraintTop_toBottomOf=&#34;@id/top_guideline&#34;
+  app:layout_constraintBottom_toTopOf=&#34;@id/bottom_guideline&#34; /&gt;
+</code></pre>
+<p>However, this will cause a compile time exception with respect to the <code>View</code> class. To fix this, import the <code>View</code> class in the <code>&lt;data&gt;</code> section as given below:</p>
+<pre><code>&lt;data&gt;
+    &lt;import type=&#34;android.view.View&#34; /&gt;
+    &lt;variable name=&#34;storeInfoActivityViewModel&#34;
+        type=&#34;com.wishabi.flipp.app.storeinfo.StoreInfoActivityViewModel&#34; /&gt;
+&lt;/data&gt;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Task 8: Change inflation and remove UI calls from activity" duration="5">
+        <h2 is-upgraded>Step 1</h2>
+<p>The layout is ready, but now it&#39;s necessary to make some changes in the activity. Open <code>StoreInfoActivity</code>. Because you&#39;re using a Data Binding layout, the inflation is done in a different way.</p>
+<p>In <code>onCreate</code>, replace:</p>
+<pre><code>setContentView(R.layout.activity_store_info)
+</code></pre>
+<p>with</p>
+<pre><code>val binding: ActivityStoreInfoBinding = 
+    DataBindingUtil.setContentView(this, R.layout.activity_store_info)
+</code></pre>
+<h2 is-upgraded>Step 2</h2>
+<p>Now you can set the data binding variable values in the activity:</p>
+<pre><code>binding.lifecycleOwner = this
+binding.storeInfoActivityViewModel = storeInfoActivityViewModel 
+``` &lt;br/&gt;
+And that&#39;s it. You bound data using the library.
+
+### Step 3
+Remove the methods that set the data to the UI widgets and displays a progress bar to indicate loading status as we have now bound the widgets directly to the `ViewModel` keeping only the flow to display a toast in the case of an `Error`.
+Here is the complete code for the `StoreInfoActivity` with these code changes:&lt;br/&gt;
+```kotlin
+class StoreInfoActivity : AppCompatActivity() {
+
+    companion object {
+        const val PARAM_STORE_NAME = &#34;param_store_name&#34;
+        const val PARAM_POSTAL_CODE = &#34;postal_code&#34;
+    }
+
+    private val storeInfoActivityViewModel: StoreInfoActivityViewModel by lazy {
+        ViewModelProvider(this, StoreInfoViewModelFactory()).get(StoreInfoActivityViewModel::class.java)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val binding: ActivityStoreInfoBinding =
+                DataBindingUtil.setContentView(this, R.layout.activity_store_info)
+
+        binding.lifecycleOwner = this
+        binding.storeInfoActivityViewModel = storeInfoActivityViewModel
+
+        val storeName = intent.getStringExtra(PARAM_STORE_NAME)
+        val postalCode = intent.getStringExtra(PARAM_POSTAL_CODE)
+
+        storeInfoActivityViewModel.storeInfo.observe(this, Observer { storeInfoViewState -&gt;
+            storeInfoViewState?.let {
+                when(it) {
+                    is Error -&gt; showError(it)
+                }
+            }
+        })
+
+        storeInfoActivityViewModel.fetchStoreInfo(postalCode, storeName)
+    }
+
+    private fun showError(error: Error) {
+        store_info_progress_bar.visibility = View.GONE
+        Toast.makeText(this, error.errorMsg, Toast.LENGTH_LONG).show()
+    }
+}
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Solution Code" duration="1">
+        <p>The final solution for this codelab can be found <a href="https://github.com/wishabi/flipp-droid/tree/codelab/android-mvvm/solution-code" target="_blank">here</a>.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Learn more" duration="2">
+        <p>Here is some Android developer documentation to help learn more:</p>
+<ul>
+<li><a href="https://developer.android.com/topic/libraries/architecture/guide.html" target="_blank">Guild to App Architecture</a></li>
+<li><a href="https://developer.android.com/topic/libraries/architecture/adding-components.html" target="_blank">Adding components to your project</a></li>
+<li><a href="https://developer.android.com/reference/android/arch/lifecycle/LiveData.html" target="_blank">LiveData</a></li>
+<li><a href="https://developer.android.com/reference/android/arch/lifecycle/MutableLiveData.html" target="_blank">MutableLiveData</a></li>
+<li><a href="https://developer.android.com/reference/android/arch/lifecycle/ViewModel.html" target="_blank">ViewModel</a></li>
+<li><a href="https://developer.android.com/reference/android/arch/lifecycle/ViewModelProviders.html" target="_blank">ViewModelProviders</a></li>
+<li><a href="https://developer.android.com/topic/libraries/data-binding" target="_blank">DataBinding</a></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/codelab-elements/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/prettify.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>
