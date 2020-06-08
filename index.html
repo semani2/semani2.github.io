@@ -903,14 +903,11 @@ var loadingLiveData = MutableLiveData(true)
 <p>Now you can set the data binding variable values in the activity:</p>
 <pre><code>binding.lifecycleOwner = this
 binding.storeInfoActivityViewModel = storeInfoActivityViewModel 
-``` &lt;br/&gt;
-And that&#39;s it. You bound data using the library.
-
-### Step 3
-Remove the methods that set the data to the UI widgets and displays a progress bar to indicate loading status as we have now bound the widgets directly to the `ViewModel` keeping only the flow to display a toast in the case of an `Error`.
-Here is the complete code for the `StoreInfoActivity` with these code changes:&lt;br/&gt;
-```kotlin
-class StoreInfoActivity : AppCompatActivity() {
+</code></pre>
+<p>And that&#39;s it. You bound data using the library.</p>
+<h2 is-upgraded>Step 3</h2>
+<p>Remove the methods that set the data to the UI widgets and displays a progress bar to indicate loading status as we have now bound the widgets directly to the <code>ViewModel</code> keeping only the flow to display a toast in the case of an <code>Error</code>. Here is the complete code for the <code>StoreInfoActivity</code> with these code changes:<br></p>
+<pre><code>class StoreInfoActivity : AppCompatActivity() {
 
     companion object {
         const val PARAM_STORE_NAME = &#34;param_store_name&#34;
@@ -962,12 +959,12 @@ class StoreInfoActivity : AppCompatActivity() {
       <google-codelab-step label="Learn more" duration="2">
         <p>Here is some Android developer documentation to help learn more:</p>
 <ul>
-<li><a href="https://developer.android.com/topic/libraries/architecture/guide.html" target="_blank">Guild to App Architecture</a></li>
+<li><a href="https://developer.android.com/topic/libraries/architecture/guide.html" target="_blank">Guide to App Architecture</a></li>
 <li><a href="https://developer.android.com/topic/libraries/architecture/adding-components.html" target="_blank">Adding components to your project</a></li>
-<li><a href="https://developer.android.com/reference/android/arch/lifecycle/LiveData.html" target="_blank">LiveData</a></li>
-<li><a href="https://developer.android.com/reference/android/arch/lifecycle/MutableLiveData.html" target="_blank">MutableLiveData</a></li>
-<li><a href="https://developer.android.com/reference/android/arch/lifecycle/ViewModel.html" target="_blank">ViewModel</a></li>
-<li><a href="https://developer.android.com/reference/android/arch/lifecycle/ViewModelProviders.html" target="_blank">ViewModelProviders</a></li>
+<li><a href="https://developer.android.com/reference/androidx/lifecycle/LiveData" target="_blank">LiveData</a></li>
+<li><a href="https://developer.android.com/reference/androidx/lifecycle/MutableLiveData" target="_blank">MutableLiveData</a></li>
+<li><a href="https://developer.android.com/reference/androidx/lifecycle/ViewModel" target="_blank">ViewModel</a></li>
+<li><a href="https://developer.android.com/reference/androidx/lifecycle/ViewModelProviders" target="_blank">ViewModelProviders</a></li>
 <li><a href="https://developer.android.com/topic/libraries/data-binding" target="_blank">DataBinding</a></li>
 </ul>
 
