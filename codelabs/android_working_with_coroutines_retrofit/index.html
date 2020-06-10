@@ -1,0 +1,330 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Working with Coroutines and Retrofit</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="android_working_with_coroutines_retrofit"
+                  title="Working with Coroutines and Retrofit"
+                  environment="web"
+                  feedback-link="https://github.com/SaiEmaniFlipp">
+    
+      <google-codelab-step label="Welcome" duration="5">
+        <p>This practical codelab is the second installment of the Flipp Android Engineer Onboarding course. Other codelabs that are part of the course are as follows:</p>
+<ul>
+<li>Working with MVVM, Livedata and Databinding (Part 1)</li>
+<li>Working with Room (Part 2)</li>
+</ul>
+<h2 is-upgraded>Introduction</h2>
+<p>In this codelab you&#39;ll learn how to use <a href="https://kotlinlang.org/docs/reference/coroutines.html" target="_blank">Kotlin Coroutines</a> in the Flipp app. Coroutines are a new way of managing background threads that can simplify code by reducing the need for callbacks. Coroutines are a Kolin feature that converts async callbacks for long-running tasks, sych as database or network access, into sequential code.</p>
+<p>To understand and use Coroutines in a real world context, we will use it along with <a href="https://square.github.io/retrofit/" target="_blank">Retrofit</a>, a REST client library. You will start with the feature that was built in the first codelab (Working with MVVM, LiveData and Databinding), that uses dummy data.</p>
+<p>By the end of the codelab you will have enough experience to use coroutines and Retrofit to load data from the network, and you be able integrate coroutines into the MVVM architecture.</p>
+<p>Additionally, we will add necessary unit tests for the ViewModel and the Repository from the first codelab as we add coroutines and implement the network layer.</p>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Completion of the first codelab of the series: Working with MVVM, LiveData and Databinding)</li>
+<li>Familiarity with Architecture components <code>ViewModel</code>, <code>LiveData</code> and <code>Repository</code>.</li>
+<li>Experience with Kotlin syntax, including extension functions and lambdas.</li>
+<li>A basic understand of using threads on Android, including the main thread, background threads and callbacks.</li>
+<li>Familiarity with <code>JUnit</code>, <code>Roboelectric</code> and <code>Mockito</code>.</li>
+</ul>
+<h2 is-upgraded>What you&#39;ll do</h2>
+<ul>
+<li>Modify the <code>Store Info</code> feature you started in the first codelab to make a web service API request and handle the response.</li>
+<li>Implement a network layer for the feature using the Retrofir library.</li>
+<li>Parse the JSON response from the web service with the Moshi library.</li>
+<li>Call code written with coroutines and obtain results.</li>
+<li>Use suspend functions to make async code sequential.</li>
+<li>Use coroutines with Architecture Components.</li>
+</ul>
+<h2 class="checklist" is-upgraded>What you&#39;ll learn</h2>
+<ul class="checklist">
+<li>Using <a href="https://kotlinlang.org/docs/reference/coroutines-overview.html" target="_blank">Kotlin Coroutines</a> effectively.</li>
+<li>Using the <a href="https://square.github.io/retrofit/" target="_blank">Retrofit</a> library to connect to a REST web service on the internet and get a response.</li>
+<li>Using the <a href="https://github.com/square/moshi" target="_blank">Moshi</a> library to parse the JSON response into a data object.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Starter code" duration="2">
+        <p>The starter code for this codelab can be found <a href="https://github.com/wishabi/flipp-droid/tree/codelab/android-retrofit/starter-code" target="_blank">here</a>.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Coroutines in Kotlin" duration="5">
+        <p>On Android, it&#39;s essential to avoid blocking the main thread. The main thread is a single thread that handles all updates to the UI. It&#39;s also the thread that calls all click handlers and other UI callbacks. As such, it has to run smoothly to guarantee a great user experience.</p>
+<p>Callbacks are a great pattern, however they have a few drawbacks. Code that heavily uses callbacks can become hard to read and harder to reason about. In addition, callbacks don&#39;t allow the use of some language features, such as exceptions.</p>
+<p>Kotlin coroutines let you convert callback-based code to sequential code. Code written sequentially is typically easier to read, and can even use language features such as exceptions.</p>
+<p>The keyword <code>suspend</code> is Kotlin&#39;s way of marking a function, or function type, available to coroutines. When a coroutine calls a function marked suspend, instead of blocking until that function returns like a normal function call, it <strong>suspends</strong> execution until the result is ready then it resumes where it left off with the result. While it&#39;s suspended waiting for a result, <strong>it unblocks the thread that it&#39;s running on</strong> so other functions or coroutines can run.</p>
+<p>The pattern of <code>async</code> and <code>await</code> in other languages is based on coroutines. If you&#39;re familiar with this pattern, the <code>suspend</code> keyword is similar to <code>async</code>. However in Kotlin, <code>await()</code> is implicit when calling a <code>suspend</code> function.</p>
+<p>Kotlin has a method <code>Deferred.await()</code> that is used to wait for the result from a coroutine started with the async builder.</p>
+<h2 is-upgraded>Understanding CoroutineScope</h2>
+<p>In Kotlin, all coroutines run inside a <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/" target="_blank">CoroutineScope</a>. A scope controls the lifetime of coroutines through its job. When you cancel the job of a scope, it cancels all coroutines started in that scope. On Android, you can use a scope to cancel all running coroutines when, for example, the user navigates away from an <code>Activity</code> or <code>Fragment</code>. Scopes also allow you to specify a default dispatcher. A dispatcher controls which thread runs a coroutine.</p>
+<p>For coroutines started by the UI, it is typically correct to start them on Dispatchers.Main which is the main thread on Android. A coroutine started on Dispatchers.Main won&#39;t block the main thread while suspended. Since a <code>ViewModel</code> coroutine almost always updates the UI on the main thread, starting coroutines on the main thread saves you extra thread switches. A coroutine started on the Main thread can switch dispatchers any time after it&#39;s started. For example, it can use another dispatcher to parse a large JSON result off the main thread.</p>
+<h2 is-upgraded>Using viewModelScope</h2>
+<p>The AndroidX <code>lifecycle-viewmodel-ktx</code> library adds a CoroutineScope to ViewModels that&#39;s configured to start UI-related coroutines. The library adds a <code>viewModelScope</code> as an extension function of the <code>ViewModel</code> class. This scope is bound to <code>Dispatchers.Main</code> and will automatically be cancelled when the ViewModel is cleared. You can see the <code>viewModelScope</code> in action in the starer code for this codelab in the <code>StoreInfoActivityViewModel</code> class.</p>
+<pre><code>viewModelScope.launch {
+    try {
+        val storeInfo = repository.fetchStoreInfo(postalCode, storeName)
+
+        storeNameLiveData.postValue(storeInfo.storeName)
+        storeAddressLiveData.postValue(storeInfo.storeAddress)
+        sundayStoreHoursLiveData.postValue(storeInfo.storeHours[0])
+        ....
+    } catch (e: Exception) {
+        _storeInfo.postValue(Error(&#34;There was an error fetching store information&#34;))
+        loadingLiveData.postValue(false)
+    }
+}
+</code></pre>
+<p>Next, you will connect to a web service with Retrofit and see coroutines in action.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 1: Add Retrofit dependencies to Gradle" duration="2">
+        <ol type="1">
+<li>Open build.gradle (Module: Flipp)</li>
+<li>In the <code>dependencies</code> section, make sure that the Retrofit libraries are present. If not add the following two lines: <br><code>implementation &#34;com.squareup.retrofit2:retrofit:$retrofit_version&#34;<br>implementation &#34;com.squareup.retrofit2:converter-moshi:$retrofit_version&#34;</code><br> If the dependencies are already present, which should be the case, make sure the project is referencing the latest version.</li>
+</ol>
+<p>Verify the latest version of the library in the Retrofit <a href="https://github.com/square/retrofit" target="_blank">documentation</a>.</p>
+<ol type="1">
+<li>Click <strong>Sync Now</strong> to rebuild the project with the new dependencies.</li>
+</ol>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 2: Implement IStoreInfoApiService" duration="5">
+        <p>Retrofit creates a network API for the app based on the content from the web service. It fetches data from the web service and routes it through a separate converter library that knows how to decode the data and return it in the form of useful objects. Retrofit includes built-in support for popular web data formats such as XML and JSON. Retrofit ultimately creates most of the network layer for you, including critical details such as running the requests on background threads.</p>
+<p>The <code>IStoreInfoApiService</code> interface holds the network layer for the feature; that is, this is the API that your <code>StoreInfoActivityViewModel</code> will use to communicate with the web service. This is the class where you will implement the Retrofit service API.</p>
+<ol type="1">
+<li>Open the file <code>IStoreInfoApiService</code> in the package <code>com.wishabi.flipp.app.storeinfo</code>. Right now the file contains only one thing: a constant for the base URL for the web service. For the purpose of this codelab, you are going to be using a mock web server, that returns a static <code>JSON</code> response.</li>
+<li>Just below the <code>companion object</code> block, define a method in the interface that defines how Retrofit talks to the web server using HTTP requests. Import <code>retorfit1.http.GET</code> and <code>retrofit2.Call</code> when requested.<pre><code>@GET(&#34;raw&#34;)
+suspend fun getStoreInfo() : StoreInfo
+</code></pre>
+Right now the goal is to get the JSON response string from the web service, and you only need one method to do that: <code>getStoreInfo()</code>. To tell Retrofit what this method should do, use a <code>@GET</code> annotation and specify the path, or endpoint, for that web service method. In this case the endpoint is called <code>raw</code>(again, this is for the sake of this codelab, you will usually work with well defined endpoints with the Flipp backend). When the <code>getStoreInfo()</code> method is invoked, Retrofit appends the endpoint <code>raw</code> to the base URL, and creates a Call object. That Call object is used to start the request. However, latest versions of Retrofit do provide out of the box support for <code>Coroutines</code> and we can make use of this by marking these interface functions with the <code>suspend</code> keyword. This would make the method available for coroutines. Additionally, instead of returning a <code>Call</code> object, we can mark the return type as the data object. Here is the complete code for the class:<pre><code>interface IStoreInfoApiService {
+companion object {
+    private const val BASE_URL = &#34;https://karboosx.net/pastebin/81!edc132cab2819d6d59a94bc6d9a5b1f65d1a9b13/&#34;
+}
+@GET(&#34;raw&#34;)
+suspend fun getStoreInfo() : StoreInfo
+}
+</code></pre>
+</li>
+</ol>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 3: Modify RetrofitProvider" duration="2">
+        <p>Open the file <code>RetrofitProvider</code> in the package <code>com.wishabi.flipp.net.retrofit</code>, and add the following method as the last method of the class.</p>
+<pre><code>fun getRetrofitStoreInfoService(): IStoreInfoApiService {
+    val retrofit = getRetrofit(IStoreInfoApiService.BASE_URL)
+    return retrofit.create(IStoreInfoApiService::class.java)
+}
+</code></pre>
+<p>The Retrofit <code>create()</code> method creates the Retrofit service itself with the <code>IStoreInfoApiService</code> interface. Because this call is expensive, and the app only needs one Retrofit service instance, you expose the service to the rest of the app using an in-house <code>ServiceLocator</code> called <code>InjectableHelper</code>. Now that all the setup is done, you can access this Retrofit service as follows:</p>
+<pre><code>val storeInfoApiService = ServiceManager.getService(RetrofitProvider::class.java).getRetrofitStoreInfoService()
+</code></pre>
+<p>Here is the complete code for the class:</p>
+<pre><code>@Mockable
+class RetrofitProvider : InjectableHelper() {
+
+    private fun getRetrofit(baseUrl: String, secondsToTimeOut: Long = 30L): Retrofit {
+
+        val okHttpClient: OkHttpClient = OkHttpClient.Builder()
+            .readTimeout(secondsToTimeOut, TimeUnit.SECONDS)
+            .connectTimeout(secondsToTimeOut, TimeUnit.SECONDS)
+            .build()
+
+        val retrofitBuilder = Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create())
+            .build()
+
+        return retrofitBuilder
+    }
+
+    fun getRetrofitAccountsService(baseUrl: String): IAccountsRetrofitService {
+        val retrofit = getRetrofit(baseUrl)
+        return retrofit.create(IAccountsRetrofitService::class.java)
+    }
+
+    fun getRetrofitAppConfigService(baseUrl: String, secondsToTimeOut: Long): IAppConfigRetrofitService {
+        val retrofit = getRetrofit(baseUrl, secondsToTimeOut)
+        return retrofit.create(IAppConfigRetrofitService::class.java)
+    }
+
+    fun getRetrofitUserAuthService(baseUrl: String): IUserAuthService {
+        val retrofit = getRetrofit(baseUrl)
+        return retrofit.create(IUserAuthService::class.java)
+    }
+
+    fun getRetrofitBackFlippService(baseUrl: String): IBackFlippRetrofitService {
+        val retrofit = getRetrofit(baseUrl)
+        return retrofit.create(IBackFlippRetrofitService::class.java)
+    }
+
+    fun getRetrofitStoreInfoService(): IStoreInfoApiService {
+        val retrofit = getRetrofit(IStoreInfoApiService.BASE_URL)
+        return retrofit.create(IStoreInfoApiService::class.java)
+    }
+}
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 4: Call the web service from the StoreInfoRepository" duration="5">
+        <p>Open <code>StoreInfoRepository</code> in the package <code>com.wishabi.flipp.app.storeinfo</code>. Scroll down to the <code>fetchStoreInfo()</code> method. <br></p>
+<pre><code>suspend fun fetchStoreInfo(postalCode: String, storeName: String): StoreInfo {
+    delay(3_000)
+    return StoreInfo(storeName = &#34;Flipp Store&#34;,
+            storeAddress = &#34;3250 Bloor St W Unit 300, Etobicoke, ON M8X 2X9&#34;,
+            storeHours = getStoreHours(),
+            storeContactNumber = &#34;+1 416-626-7092&#34;,
+            storeWebsite = &#34;store.flipp.com&#34;,
+            storeNumReviews = 61,
+            storeRating = 4.5f)
+}
+</code></pre>
+<p>This is the method where you&#39;ll call the Retrofit service and handle the returned JSON string. Right now there&#39;s just a placeholder string for the response.</p>
+<p>Delete the lines 20-27 and add the following code to call the Retrofit service.<br></p>
+<pre><code>suspend fun fetchStoreInfo(postalCode: String, storeName: String): StoreInfo {
+    val storeInfoApiService = ServiceManager.getService(RetrofitProvider::class.java)
+            .getRetrofitStoreInfoService()
+    return storeInfoApiService.getStoreInfo()
+}
+</code></pre>
+<p>You can see the beauty of coroutines here. A flow which generally warrants a callback style interaction can now be done sequentially making it less verbose and more readable.</p>
+<p>Delete the <code>getStoreHours()</code> method that you had added previously to return dummy data.</p>
+<p>Here is the complete code for the class:<br></p>
+<pre><code>class StoreInfoRepository : InjectableHelper() {
+
+    suspend fun fetchStoreInfo(postalCode: String, storeName: String): StoreInfo {
+        val storeInfoApiService = ServiceManager.getService(RetrofitProvider::class.java)
+                .getRetrofitStoreInfoService()
+        return storeInfoApiService.getStoreInfo()
+    }
+}
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 5: Modify StoreInfo to be Moshi compatible" duration="5">
+        <p>A sample entry of the JSON response you get from the web service looks something like this:</p>
+<pre><code>{
+  &#34;storeName&#34;: &#34;Flipp Store&#34;,
+  &#34;storeAddress&#34;: &#34;3250 Bloor St W Unit 300, Etobicoke, ON M8X 2X9&#34;,
+  &#34;storeHours&#34;: [
+    &#34;11AM - 6PM&#34;,
+    &#34;10AM - 8PM&#34;,
+    &#34;10AM - 8PM&#34;,
+    &#34;10AM - 8PM&#34;,
+    &#34;10AM - 8PM&#34;,
+    &#34;10AM - 8PM&#34;,
+    &#34;10AM - 9PM&#34;
+  ],
+  &#34;storeContactNumber&#34;: &#34;+1 416-626-7092&#34;,
+  &#34;storeWebsite&#34;: &#34;store.flipp.com&#34;,
+  &#34;storeNumReviews&#34;: 61,
+  &#34;storeRating&#34;: 4.5
+}
+</code></pre>
+<p>In the example above, notice that as part of each <code>StoreInfo</code> response has these JSON key and value pairs:</p>
+<ul>
+<li><code>storeName</code>: Name of the store</li>
+<li><code>storeAddress</code>: Address of the store</li>
+<li><code>storeHours</code>: An array of store hours for each day of the week starting from Sunday</li>
+<li><code>storeContactNumber</code>: Contact number of the store</li>
+<li><code>storeWebstie</code>: Website of the store</li>
+<li><code>storeNumReviews</code>: Number of reviews a store has</li>
+<li><code>storeRating</code>: Rating of the store</li>
+</ul>
+<p>Moshi parses this JSON data and converts it into an Kotlin object. To do this, it needs to have a Kotlin data class to store the parsed results, so the next step is to convert our existing data class to support Moshi.</p>
+<p>Open <code>StoreInfo</code> class in the package <code>com.wishabi.flipp.app.storeinfo</code>. Notice that each of the variables in the <code>StoreInfo</code> class corresponds to a key name in the JSON object. However, sometimes you will have to name the variables different to the JSON keys, to support this, you can replace the <code>storeName</code> key with the line shown below. Import <code>com.squareup.moshi.Json</code> when requested.</p>
+<pre><code>@Json(name = &#34;storeName&#34;) val storeName: String
+</code></pre>
+<p>To use variable names in your data class that differ from the key names in the JSON response, use the <code>@Json</code> annotation.</p>
+<p>Here is the complete code for this class:</p>
+<pre><code>data class StoreInfo(@Json(name = &#34;storeName&#34;) val storeName: String,
+                     val storeAddress: String,
+                     val storeHours: List&lt;String&gt;,
+                     val storeContactNumber: String,
+                     val storeWebsite: String,
+                     val storeRating: Float,
+                     val storeNumReviews: Int)
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 6: Compile and Run" duration="5">
+        <p>Compile and run the app. Now you should see the following screen after following the below steps:</p>
+<ol type="1">
+<li>Open Flipp app.</li>
+<li>Click on any of the flyers.</li>
+<li>Once the flyer opens, click on the overflow menu.</li>
+<li>Select the <code>View Store Info</code> menu option.</li>
+</ol>
+<p>You should now see the <code>StoreInfoActivity</code>.<br><img style="width: 250.00px" src="img/3ad55c081b27cd9f.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Solution Code" duration="1">
+        <p>The final solution for this codelab can be found <a href="https://github.com/wishabi/flipp-droid/tree/codelab/android-retrofit/solution-code" target="_blank">here</a>.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Learn more" duration="2">
+        <p>Kotlin documentation:</p>
+<ul>
+<li><a href="https://codelabs.developers.google.com/codelabs/kotlin-coroutines/" target="_blank">Coroutines codelab</a></li>
+<li><a href="https://kotlinlang.org/docs/reference/coroutines-overview.html" target="_blank">Coroutines, official documentation</a></li>
+<li><a href="https://kotlinlang.org/docs/reference/coroutines/coroutine-context-and-dispatchers.html" target="_blank">Coroutine context and dispatchers</a></li>
+</ul>
+<p>Retrofit documentation:</p>
+<ul>
+<li><a href="https://square.github.io/retrofit/" target="_blank">Retrofit</a></li>
+<li><a href="https://github.com/square/moshi" target="_blank">Moshi</a></li>
+<li><a href="https://proandroiddev.com/moshi-with-retrofit-in-kotlin-%EF%B8%8F-a69c2621708b" target="_blank">Moshi with Retrofit in Kotlin</a></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/codelab-elements/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/prettify.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>
