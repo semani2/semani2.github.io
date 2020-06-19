@@ -1,0 +1,25 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2020-06-19T16:09:37-04:00",
+  "id": "android_working_with_room",
+  "duration": 53,
+  "title": "Working with Room",
+  "authors": "Sai Emani",
+  "summary": "Working with Room",
+  "source": "android-working-with-room-codelab.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "android"
+  ],
+  "tags": [
+    "medium"
+  ],
+  "feedback": "https://github.com/SaiEmaniFlipp",
+  "url": "android_working_with_room"
+}

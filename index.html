@@ -1,244 +1,303 @@
-<!--
-@license
-Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
 
 <!doctype html>
-<html lang="en">
+
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="description" content="{{view.description}}">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="{{view.title}}">
-  <meta name="application-name" content="{{view.title}}">
-  <link rel="canonical" href="{{canonicalViewUrl(view)}}" />
-  <link rel="preconnect" href="https://www.google-analytics.com" />
-
-  <script>
-    window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-    ga('create', '{{ga}}', 'auto');
-    ga('send', 'pageview');
-    {% if view.ga %}
-    ga('create', '{{view.ga}}', 'auto', { name: 'view' });
-    ga('view.send', 'pageview');
-    {% endif %}
-  </script>
-  <script async src='https://www.google-analytics.com/analytics.js'></script>
-
-  <title>{{view.title}}</title>
-
-  <link rel="stylesheet" href="/styles/main.css">
-
-  {% if view.customStyle %}
-    <link rel="stylesheet" href="{{view.customStyle}}">
-  {%- endif %}
-
-  <link rel="import" href="/elements/elements.html">
-
-  <style is="custom-style">
-    :root {
-      --paper-tabs-selection-bar-color: currentcolor;
-      --paper-input-container-underline: {
-        display: none;
-      };
-      --paper-input-container-underline-focus: {
-        display: none;
-      };
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Working with Room</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
     }
-
-    .dropdown-filter {
-      --paper-input-container: {
-        padding: 8px;
-      }
+    .error {
+      color: red;
     }
   </style>
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="#455a64">
-  <meta name="apple-mobile-web-app-title" content="{{view.title}}">
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicons/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicons/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="194x194" href="/images/favicons/favicon-194x194.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="/images/favicons/android-chrome-192x192.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicons/favicon-16x16.png">
-  <link rel="manifest" href="site.webmanifest">
-  <link rel="mask-icon" href="/images/favicons/safari-pinned-tab.svg" color="#455a64">
-  <meta name="msapplication-TileColor" content="#455a64">
-  <meta name="msapplication-TileImage" content="/images/favicons/mstile-144x144.png">
-  <meta name="theme-color" content="#455a64">
-
-  <meta name="og:type" property="og:type" content="website" />
-  <meta name="og:title" property="og:title" content="{{view.title}}" />
-  <meta name="og:description" property="og:description" content="{{view.description}}" />
-  <meta name="og:url" property="og:url" content="{{canonicalViewUrl(view)}}" />
-  <meta name="og:site_name" property="og:site_name" content="Codelabs" />
-  <meta name="og:determiner" property="og:determiner" content="the" />
-  <meta name="og:locale" property="og:locale" content="en_US" />
-  <meta name="og:image" property="og:image" content="/images/og-image.png" />
-  <meta name="og:image:url" property="og:image:url" content="/images/og-image.png" />
-  <meta name="og:image:type" property="og:image:type" content="image/png" />
-  <meta name="og:image:width" property="og:image:width" content="1200" />
-  <meta name="og:image:height" property="og:image:height" content="1200" />
-  <meta name="og:image:alt" property="og:image:alt" content="Codelabs" />
-
-  <meta name="twitter:card" property="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" property="twitter:title" content="{{view.title}}" />
-  <meta name="twitter:description" property="twitter:description" content="{{view.description}}" />
-  <meta name="twitter:image" property="twitter:image" content="/images/og-image.png" />
-  <meta name="twitter:url" property="twitter:url" content="{{canonicalViewUrl(view)}}" />
 </head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="android_working_with_room"
+                  title="Working with Room"
+                  environment="web"
+                  feedback-link="https://github.com/SaiEmaniFlipp">
+    
+      <google-codelab-step label="Welcome" duration="5">
+        <p>This practical codelab is the third installment of the Flipp Android Engineer Onboarding course. Other codelabs that are part of the course are as follows:</p>
+<ul>
+<li><a href="https://flipp-android-mvvm-codelab.github.io" target="_blank">Working with MVVM, Livedata and Databinding (Part 1)</a></li>
+<li><a href="https://flipp-android-coroutines-codelab.github.io" target="_blank">Working with Coroutines and Retrofit (Part 2)</a></li>
+</ul>
+<h2 is-upgraded>Introduction</h2>
+<p>In this codelab you&#39;ll learn how to use the <a href="https://developer.android.com/topic/libraries/architecture/room" target="_blank">Room Persistence Library</a> in the Flipp app. The Room Persistence Library provides an abstraction layer over SQLite to allow for more robust database access while harnessing the full power of SQLite.</p>
+<p>The library helps you create a cache of your app&#39;s data on a device that&#39;s running your app. This cache, which serves as your app&#39;s single source of truth, allows users to view a consistent copy of key information within your app, regardless of whether users have an internet connection.</p>
+<p>There are 3 major components in Room:</p>
+<p><code>Database</code>: Contains the database holder and serves as the main access point for the underlying connection to your app&#39;s persisted, relational data. The class that&#39;s annotated with <code>@Database</code> should satisfy the following conditions:</p>
+<ul>
+<li>Be an abstract class that extends <code>RoomDatabase</code>.</li>
+<li>Include the list of entities associated with the database within the annotation.</li>
+<li>Contain an abstract method that has 0 arguments and returns the class that is annotated with <code>@Dao</code>.</li>
+</ul>
+<p>At runtime, you can acquire an instance of Database by calling <code>Room.databaseBuilder()</code> or <code>Room.inMemoryDatabaseBuilder()</code>.</p>
+<p><code>Entity</code>: Represents a table within the database.</p>
+<p><code>DAO</code>: Contains the methods used for accessing the database.</p>
+<p>The app uses the Room database to get the data access objects, or DAOs, associated with that database. The app then uses each <code>DAO</code> to get entities from the database and save any changes to those entities back to the database. Finally, the app uses an entity to get and set values that correspond to table columns within the database.</p>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Completion of the first codelab of the series: <a href="https://flipp-android-mvvm-codelab.github.io" target="_blank">Working with MVVM, LiveData and Databinding</a></li>
+<li>Completion of the second codelab of the series: <a href="https://flipp-android-coroutines-codelab.github.io" target="_blank">Working with Coroutines and Retrofit</a></li>
+<li>Familiarity with Architecture components <code>ViewModel</code>, <code>LiveData</code> and <code>Repository</code>.</li>
+<li>Experience with Kotlin syntax, including extension functions and lambdas.</li>
+</ul>
+<h2 is-upgraded>What you&#39;ll do</h2>
+<ul>
+<li>Build on top of the <code>Store Info</code> feature and implement a local cache using the Room persistence library to cache store information locally.</li>
+<li>Create an <code>Entity</code> that represents <code>StoreInfo</code> objects.</li>
+<li>Define the mapping of SQL queries to Kotlin methods in a DAO (data acess object).</li>
+<li>Add a Room database to the app for persisting data locally, and intialize the database.</li>
+<li>Abstract the data backend using the <code>StoreInfoRepository</code> class.</li>
+</ul>
 
-<body id="app" is="body-bind" class="loading fullbleed {% if view.id != 'default' -%}view{%- endif -%}">
-  <paper-header-panel id="main" mode="standard" main>
-    {% raw %}
-    <div id="mainToolbar" class="paper-header">
-      <div class="site-width layout horizontal">
-        <a href="/">
-          <img src="/images/flipp.png" class="logo-devs" alt="Codelabs Logo">
-        </a>
-        <div id="searchbar">
-          <paper-input-container no-label-float>
-            <paper-icon-button prefix icon="search"></paper-icon-button>
-            <label>Search</label>
-            <input is="iron-input" bind-value="{{searchVal}}" on-keydown="onSearchKeyDown">
-          </paper-input-container>
-        </div>
-      </div>
-    </div>
-    {% endraw %}
 
-    {# Event pages force down attribute. On homepage, it's applied dynamically. #}
-    <header id="banner" {% if view.id != 'default' -%}down{%- else %}down$="[[_toBoolean(selectedFilter)]]"{%- endif %}>
-      <div class="site-width">
-        {% if view.id == 'default' %}
-        <h2 class="banner-title">Welcome to Flipp Codelabs!</h2>
-        <div class="banner-description"
-             data-filter-selected$="{% raw %}[[_toBoolean(selectedFilter)]]{% endraw %}">
-          <p class="banner-info">
-            Flipp Codelabs provide a guided, tutorial, hands-on
-            coding experience. Most codelabs will step you through the process
-            of building a small application, or adding a new feature to an
-            existing application.
-            <br>
-            <a href="https://github.com/wishabi/codelabs">Flipp Codelab on Github</a>
-          </p>
-        {%- else -%}
-          <div class="banner-description">
-            <img id="logo" src="{{view.logoUrl}}" alt="Event logo">
-            <div class="banner-meta">
-              <h3>{{view.title}}</h3>
-              {% if view.description -%}
-                <p>{{view.description}}</p>
-              {%- endif %}
-            </div>
-        {%- endif %}
-          </div>
-      </div>
-    </header>
+      </google-codelab-step>
+    
+      <google-codelab-step label="Starter code" duration="2">
+        <p>The starter code for this codelab can be found <a href="https://github.com/wishabi/flipp-droid/tree/codelab/android-room/starter-code" target="_blank">here</a>.</p>
 
-    <main>
-      <div id="filters" class="site-width layout horizontal center justified">
-        <div id="sortby">
-          <paper-tabs selected="0" noink on-iron-activate="sortBy">
-            <paper-tab>A-Z</paper-tab>
-            <paper-tab>Recent</paper-tab>
-            <paper-tab>Duration</paper-tab>
-          </paper-tabs>
-        </div>
 
-        {% if view.id == 'default' %}
-        <paper-dropdown-menu
-          label="Choose an event"
-          class="dropdown-filter"
-          no-label-float
-          noink no-animations
-        >
-          <paper-listbox
-            id="eventList"
-            slot="dropdown-content"
-            class="dropdown-content"
-          >
-            {%- for view in views -%}
-              {%- if view.id != 'default' && !view.hidden -%}
-                <a href="/{{view.url}}/" tabindex="-1">
-                  <paper-item>{{view.title}}</paper-item>
-                </a>
-              {%- endif -%}
-            {%- endfor %}
-          </paper-listbox>
-        </paper-dropdown-menu>
-        {% endif %}
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 1: Create the required Entities" duration="10">
+        <p>Create a class <code>StoreInfoEntity</code> in the package <code>com.wishabi.flipp.app.storeinfo.data</code> and add the required Room annotations.</p>
+<pre><code>@Entity(tableName = &#34;store_info&#34;)
+data class StoreInfoEntity(
+    @PrimaryKey var storeName: String,
+    var storeAddress: String,
+    var storeContactNumber: String,
+    var storeWebsite: String,
+    var storeRating: Float,
+    var storeNumReviews: Int)
+</code></pre>
+<p>Let&#39;s see what these annotations do.</p>
+<p>Each <code>@Entity</code> class represents a SQLite table. Annotate your class declaration to indicate that it&#39;s an entity. You can specify the name of the table if you want it to be different from the name of the class. <br><code>PrimaryKey</code> Every entity needs a primary key. To keep things simple, store name acts as its own primary key. <br><code>ColumnInfo(name = &#34;storeName&#34;)</code> Specifies the name of the column in the table if you want it to be different from the name of the member variable. <br> Every property that&#39;s stored in the database needs to have public visibility, which is the Kotlin default. <br></p>
+<p>Next, Create a data class <code>StoreHoursEntity</code> in the package <code>com.wishabi.flipp.app.storeinfo.data</code> and add the following code to store the store hours data.</p>
+<pre><code>@Entity(tableName = &#34;store_hours&#34;)
+data class StoreHoursEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int,
+    val dayIndex: Int,
+    val storeHours: String,
+    val storeName: String
+)
+</code></pre>
+<p>The <code>autoGenerate</code> flag on the primary key annotation is used to generate unique keys. The <code>StoreInfoEntity</code> and the <code>StoreHoursEntity</code> tables are connected by the <code>storeName</code> property. <br></p>
+<p>Finally, In order to query the <code>StoreInfoEntity</code> along with its <code>StoreHours</code>, you must first model the one-to-many relationship between the two entities. To do this, create a new data class <code>StoreInfoWithHours</code> in the package <code>com.wishabi.flipp.app.storeinfo.data</code> where each instance holds an instance of the parent entity and a list of all corresponding child entity instances. Add the @Relation annotation to the instance of the child entity, with parentColumn set to the name of the primary key column of the parent entity and entityColumn set to the name of the column of the child entity that references the parent entity&#39;s primary key.</p>
+<pre><code>data class StoreInfoWithHours(
+    @Embedded val storeInfo: StoreInfoEntity,
+    @Relation(
+        parentColumn = &#34;storeName&#34;,
+        entityColumn = &#34;storeName&#34; 
+    )
+    val storeHours: List&lt;StoreHoursEntity&gt;
+)
+</code></pre>
 
-        {%- if showcats -%}
-        <paper-dropdown-menu
-          label="Filter by category"
-          class="dropdown-filter"
-          no-label-float
-          noink no-animations
-        >
-          <paper-listbox
-            id="categorylist"
-            slot="dropdown-content"
-            class="dropdown-content"
-            on-iron-activate="onCategoryActivate"
-            attr-for-selected="filter"
-          >
-              {% for category in categories -%}
-                {%- if categoryHasShowableCodelabs(category, codelabs) -%}
-                  <paper-item filter="{{category}}">{{category}}</paper-item>
-                {%- endif -%}
-              {%- endfor %}
-          </paper-listbox>
-        </paper-dropdown-menu>
-        {%- endif -%}
-      </div>
 
-      <card-sorter id="cards" class="site-width">
-        {% for codelab in codelabs -%}
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 2: Create the DAOs" duration="10">
+        <h2 is-upgraded>What is the DAO?</h2>
+<p>In the DAO (data access object), you specify SQL queries and associate them with method calls. The compiler checks the SQL and generates queries from convenience annotations for common queries, such as @Insert. Room uses the DAO to create a clean API for your code.</p>
+<p>The DAO must be an interface or abstract class.</p>
+<p>By default, all queries must be executed on a separate thread.</p>
+<p>Room has coroutines support, allowing your queries to be annotated with the suspend modifier and then called from a coroutine or from another suspension function.</p>
+<h2 is-upgraded>Implement the DAOs</h2>
+<p>First, let&#39;s write a DAO that provides a method to insert store info. Create a new Kotlin class file called <code>StoreInfoDao</code> in the package <code>com.wishabi.flipp.app.storeinfo.data</code> and copy paste the following code and fix the imports as neessary to make it compile.</p>
+<pre><code>@Dao
+interface StoreInfoDao {
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(storeInfo: StoreInfoEntity)
+}
+</code></pre>
+<p>Let&#39;s walk through it:</p>
+<ul>
+<li><code>StoreInfoDao</code> is an interface; DAOs must either be interfaces or abstract classes.</li>
+<li>The <code>@Dao</code> annotation identifies it as a DAO class for Room.</li>
+<li><code>suspend fun insert(storeInfo: StoreInfoEntity)</code>: Declares a suspend function to insert StoreInfo.</li>
+<li>The <code>@Insert</code> annotation is a speical DAO method annotation where you don&#39;t have to provide any SQL!</li>
+</ul>
+<p>Next, Let&#39;s write a DAO that provides a method to insert store hours. Create a new Kotlin class file called <code>StoreHoursDao</code> in the package <code>com.wishabi.flipp.app.storeinfo.data</code> and copy paste the following code and fix the imports as necessary to make it compile.</p>
+<pre><code>@Dao
+interface StoreHoursDao {
 
-          {# Only filter hidden codelabs from the default view.
-             All other views are explicitly opt-in via metadata. #}
-          {% if codelab.status.indexOf('hidden') === -1 || view.id !== 'default' %}
-            {% set cat = levelledCategory(codelab, view.catLevel) %}
-            <a href="{{codelabUrl(view, codelab)}}" on-tap="navigate"
-               class="codelab-card category-{{categoryClass(codelab, cat.level)}}"
-               data-category="{{codelab.category}}"
-               data-title="{{codelab.title}}"
-               data-duration="{{codelab.duration}}"
-               data-updated="{{codelab.updated}}"
-               data-tags="{{codelab.tags}}"
-               data-pin="{{codelabPin(view, codelab)}}">
-              {%- if codelabPin(view, codelab) -%}
-                <div class="card-pin"></div>
-              {%- endif -%}
-              <div class="description">{{codelab.title}}</div>
-              <div class="card-duration">
-                <span>{%- if codelab.duration -%}{{codelab.duration}} min {%- endif -%}</span>
-                <span>{%- if codelab.updated -%}Updated {{codePrettyDate(codelab.updated)}}{%- endif -%}</span>
-              </div>
-              <div class="card-footer">
-                <div class="category-icon {{categoryClass(codelab, cat.level)}}-icon"></div>
-                <paper-button class="{{categoryClass(codelab, cat.level)}}-bg">Start</paper-button>
-              </div>
-            </a>
-          {%- endif %}
-        {%- endfor %}
-      </card-sorter>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(storeHours: StoreHoursEntity)
+}
+</code></pre>
+<p>Finally, let&#39;s add a method that returns an instance of the data class that pairs the parent entity (StoreInfo) and the child entity (StoreHours). This method requires Room to run two queries, so add the <code>@Transaction</code> annotation to this method to ensure that the whole operation is performed atomically. Open the class <code>StoreInfoDao</code> and add the following method:</p>
+<pre><code>@Transaction
+    @Query(&#34;SELECT * FROM store_info where storeName = :storeName&#34;)
+    suspend fun getStoreInfoWithHours(storeName: String): StoreInfoWithHours
+</code></pre>
 
-      <div id="loading-placeholder" class="site-width">
-        Loading Codelabs, please wait...
-      </div>
-    </main>
-  </paper-header-panel>
 
-  <!-- build:js /scripts/main.js -->
-  <script src="bower_components/url-search-params-polyfill/build/url-search-params.js"></script>
-  <script src="scripts/app.js"></script>
-  <!-- endbuild-->
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 3: Modify the Room database" duration="5">
+        <h2 is-upgraded>What is a Room database?</h2>
+<ul>
+<li>Room is a database layer on top of an SQLite database.</li>
+<li>Room takes care of mundane tasks that you used to handle with an <code>SQLiteOpenHelper</code>.</li>
+<li>Room uses the DAO to issue queries to its database.</li>
+<li>By default, to avoid poor UI performance, Room doesn&#39;t allow you to issue queries on the main thread. When Room queries return <code>LiveData</code>, the queries are automatically run asynchronously on a background thread.</li>
+<li>Room provides compile-time checks of SQLite statements.</li>
+</ul>
+<h2 is-upgraded>Modify AppDatabase</h2>
+<p>Open class <code>AppDatabase</code> which is an abstract class that extends <code>RoomDatabase</code>. First, add the new two <code>Entity</code> classes to the <code>entities</code> array.</p>
+<pre><code>entities = {SearchMerchantsItem.class, Merchant.class, Flyer.class, TrendingSearch.class, LastVisitedMerchant.class, StoreInfo.class, StoreHours.class},
+</code></pre>
+<p>Next, add two abstract methods to fetch the two new <code>DAO</code>s you created, in the <code>AppDatabase</code> class.</p>
+<pre><code>public abstract StoreInfoDao storeInfoDao();
+public abstract StoreHoursDao storeHoursDao();
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 3: Modify the Repository" duration="10">
+        <p>As part of the first <a href="https://flipp-android-mvvm-codelab.github.io" target="_blank">codelab</a> in this series, you implemented a <code>Repository</code> which abstarcts out the data sources. The repository is not part of the Architecture components libraries, but it is a suggested best practice for code separation and architecture.</p>
+<p>Open the file <code>StoreInfoRepository</code> and modify the function <code>fetchStoreInfo()</code> to now work with the database along with the api call. For the sake of the codelab and to limit the complexity, you are going to implement the follwing requirements:</p>
+<ul>
+<li>Fetch <code>StoreInfo</code> over the network using our existing retrofit service. (same as before)</li>
+<li>Convert the <code>StoreInfo</code> object into <code>StoreInfoEntity</code> and store it to the database using the <code>StoreInfoDao</code>.</li>
+<li>Create a list of <code>StoreHoursEntity</code> objects from the list of store hours you receive from the API, and insert the list into database using the <code>StoreHoursDao</code>.</li>
+<li>Fetch and return the required data of Store Info with hours which is captured in the data class <code>StoreInfoWithHours</code> using the <code>StoreInfoDao</code>.</li>
+<li>Finally, modify the return type of the method from <code>StoreInfo</code> to <code>StoreInfoWithHours</code>.</li>
+</ul>
+<p>Here is the complete code for the method:</p>
+<pre><code>suspend fun fetchStoreInfo(postalCode: String, storeName: String): StoreInfoWithHours {
+    val storeInfoApiService = ServiceManager.getService(RetrofitProvider::class.java)
+            .getRetrofitStoreInfoService()
+    val storeInfo = storeInfoApiService.getStoreInfo()
+    // Hack for the purposes of the codelab
+    storeInfo.storeName = storeName
+
+    // Store locally
+    val appDatabase = ServiceManager.getService(FlippRepository::class.java).database
+    appDatabase.storeInfoDao().insert(storeInfo.getEntity())
+    appDatabase.storeHoursDao().insert(storeInfo.getStoreHours())
+
+    return appDatabase.storeInfoDao().getStoreInfoWithHours(storeName)
+}
+</code></pre>
+<p>However, to get the code to compile, you would need to add two additional functions to the <code>StoreInfo</code>.</p>
+<ul>
+<li><code>getEntity()</code>: This would convert a <code>StoreInfo</code> object to a <code>StoreInfoEntity</code> object.</li>
+<li><code>getStoreHours()</code>: This would convert the list of store hours in <code>StoreInfo</code> to a list of <code>StoreHoursEntity</code> objects.</li>
+</ul>
+<p>To avoid the <code>StoreInfo</code> class from knowing abour Room entities, add these methods as <code>extension functions</code>.</p>
+<p>Next, open the file <code>Extensions.kt</code> and add the following two methods.</p>
+<pre><code>fun StoreInfo.getStoreHours(): List&lt;StoreHoursEntity&gt; {
+    val hoursList = mutableListOf&lt;StoreHoursEntity&gt;()
+    this.storeHours.forEachIndexed { index, hours -&gt;
+        val storeHour = StoreHoursEntity(id = 0, dayIndex = index, storeHours = hours, storeName = storeName)
+        hoursList.add(storeHour)
+    }
+    return hoursList
+}
+
+fun StoreInfo.getEntity() = StoreInfoEntity(storeName, storeAddress, storeContactNumber, storeWebsite, storeRating, storeNumReviews)
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 4: Modify the ViewModel" duration="5">
+        <p>Now that your repository is ready, you need to update the <code>StoreInfoActivityViewModel</code>. Currently, the viewmodel is accepting a <code>StoreInfo</code> object from the repository and updating its <code>LiveData</code> fields.</p>
+<p>Modify the <code>fetchStoreInfo()</code> method to accept an object of <code>StoreInfoWithHours</code> from the repository and update its <code>LiveData</code> fields accordingly.</p>
+<p>Here is the complete code for the method:</p>
+<pre><code>fun fetchStoreInfo(postalCode: String?, storeName: String?) {
+    if (postalCode.isNullOrEmpty() || storeName.isNullOrEmpty()) {
+        _storeInfo.postValue(Error(&#34;Invalid postal code or store name&#34;))
+        return
+    }
+
+    if (_storeInfo.value is Success
+            &amp;&amp; this.postalCode.equals(postalCode, ignoreCase = true)
+            &amp;&amp; this.storeName.equals(storeName, ignoreCase = true)) {
+        return
+    }
+
+    loadingLiveData.postValue(true)
+
+    this.postalCode = postalCode
+    this.storeName = storeName
+
+    viewModelScope.launch {
+        try {
+            val storeInfoWithHours = repository.fetchStoreInfo(postalCode, storeName)
+            val storeInfo = storeInfoWithHours.storeInfo
+            val storeHours = storeInfoWithHours.storeHours
+
+            storeNameLiveData.postValue(storeInfo.storeName)
+            storeAddressLiveData.postValue(storeInfo.storeAddress)
+            
+            sundayStoreHoursLiveData.postValue(storeHours[0].storeHours)
+            mondayStoreHoursLiveData.postValue(storeHours[1].storeHours)
+            tuesdayStoreHoursLiveData.postValue(storeHours[2].storeHours)
+            wednesdayStoreHoursLiveData.postValue(storeHours[3].storeHours)
+            thursdayStoreHoursLiveData.postValue(storeHours[4].storeHours)
+            fridayStoreHoursLiveData.postValue(storeHours[5].storeHours)
+            saturdayStoreHoursLiveData.postValue(storeHours[6].storeHours)
+            
+            storeWebsiteLiveData.postValue(storeInfo.storeWebsite)
+            storeContactNumberLiveData.postValue(storeInfo.storeContactNumber)
+            storeRatingLiveData.postValue(storeInfo.storeRating)
+            storeNumReviewsLiveData.postValue(storeInfo.storeNumReviews)
+
+            loadingLiveData.postValue(false)
+        } catch (e: Exception) {
+            _storeInfo.postValue(Error(&#34;There was an error fetching store information&#34;))
+            loadingLiveData.postValue(false)
+        }
+    }
+}
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Step 5: Compile and Run" duration="5">
+        <p>Compile and run the app. Now you should see the following screen after following the below steps:</p>
+<ol type="1">
+<li>Open Flipp app.</li>
+<li>Click on any of the flyers.</li>
+<li>Once the flyer opens, click on the overflow menu.</li>
+<li>Select the <code>View Store Info</code> menu option.</li>
+</ol>
+<p>You should now see a page similar to the below screenshot.<br><img style="width: 250.00px" src="img/83cf8e17fc914118.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Solution Code" duration="1">
+        <p>The final solution for this codelab can be found <a href="https://github.com/wishabi/flipp-droid/tree/codelab/android-room/solution-code" target="_blank">here</a>.</p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/codelab-elements/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/prettify.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
 </body>
 </html>
